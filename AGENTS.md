@@ -37,8 +37,13 @@ codex_skills/
   pr-review/                           <- Codex PR-review skill (gh CLI)
 agent_tables/                          <- live Agent Table workstreams go here
 implementation_plans/                  <- canonical implementation plans go here
+guides/
+  implementation-planning-guide.md     <- how to write a strong plan
 scripts/
   list-stale-worktrees.sh              <- worktree cleanup audit
+  install-local.sh                     <- one-time seed installer
+  plan_renderer.py                     <- markdown -> styled HTML plan renderer
+  serve_implementation_plans.py        <- local plan viewer (port 8765)
 ```
 
 ## Planning, Scope, And Review Discipline
@@ -187,6 +192,23 @@ Keep exactly one canonical implementation-plan file per workstream under
 `implementation_plans/`, linked from the workstream's Agent Table. See
 [Agent_Table_Collaboration_Rules.md](strategies/Agent_Table_Collaboration_Rules.md)
 for the full plan-versioning and review-round conventions (`v1`, `v2`, ...,
-revision history, immutable dated reviews). If your workspace also runs a
-local rendered-plan viewer, link it alongside the `.md` source, never
-instead of it.
+revision history, immutable dated reviews), and
+[guides/implementation-planning-guide.md](guides/implementation-planning-guide.md)
+for how to actually write a strong plan (structure, what belongs in each
+section, worked examples, anti-patterns).
+
+Run the local rendered-plan viewer with:
+
+```bash
+python3 scripts/serve_implementation_plans.py        # http://127.0.0.1:8765/plans
+```
+
+It renders every `.md` file under `implementation_plans/` into a styled
+reading view with a table of contents, milestone/decision-card formatting,
+and a sidebar of recent plans, no separate build step. When citing a plan in
+a table entry, handoff, or message to the owner, link both the viewer URL
+and the repo-relative `.md` source path; the viewer is a formatted reading
+view, the `.md` path is the exact reviewed source, and neither replaces the
+other. Quickly confirm a viewer URL actually resolves before sending it
+(`curl -s -o /dev/null -w '%{http_code}' <url>`); if the server is not
+running, start it or say so instead of handing over a dead link.

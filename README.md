@@ -35,6 +35,14 @@ Code and Codex read the same file by different conventional names.
   wiring discipline, test-double fidelity, source-of-truth fix discipline,
   and a few other rules distilled from real defects caught in production use,
   generalized away from any one product.
+- **Implementation planning guide** ([guides/implementation-planning-guide.md](guides/implementation-planning-guide.md)) —
+  how to actually write a strong implementation plan: section-by-section
+  structure, worked examples, and anti-patterns, distilled from real plans
+  that passed independent review cleanly.
+- **Local plan viewer** ([scripts/serve_implementation_plans.py](scripts/serve_implementation_plans.py)) —
+  `python3 scripts/serve_implementation_plans.py` renders every plan under
+  `implementation_plans/` into a styled, linkable reading view at
+  `http://127.0.0.1:8765/plans`, no build step.
 
 ## Installing locally
 
