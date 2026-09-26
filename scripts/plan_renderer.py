@@ -20,9 +20,9 @@ BOLD_RE = re.compile(r"\*\*([^*]+)\*\*")
 ITALIC_RE = re.compile(r"(?<!\*)\*([^*]+)\*(?!\*)")
 LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 KEY_VALUE_RE = re.compile(r"^([A-Z][A-Za-z0-9 /'\-]{1,40}):\s+(.*)$")
-MILESTONE_TITLE_RE = re.compile(r"^(M\d+)\b\.?\s*(.*)$")
-DONE_SUFFIX_RE = re.compile(r"\s*[–—:\-]?\s*\(?(done|complete|completed)\)?\s*$", re.I)
-OWNER_DECISION_TITLE_RE = re.compile(r"owner decision", re.I)
+MILESTONE_TITLE_RE = re.compile(r"^(M\d+|Milestone\s+[\w.-]+)\b[:.]?\s*(.*)$", re.I)
+DONE_SUFFIX_RE = re.compile(r"\s*[\u2013\u2014:\-]?\s*\(?(done|complete|completed)\)?\s*$", re.I)
+OWNER_DECISION_TITLE_RE = re.compile(r"owner (decision|choice)", re.I)
 
 
 def slugify(text: str) -> str:
@@ -272,6 +272,20 @@ def render_markdown_body(text: str) -> tuple[list[Section], list[str]]:
             i = next_i
             continue
 
+        if current is None and re.match(r"^\s*[-*]\s+", line):
+            item_re = re.compile(r"^\s*[-*]\s+(.*)$")
+            j = i
+            items = []
+            while j < n and item_re.match(lines[j]):
+                items.append(item_re.match(lines[j]).group(1).strip())
+                j += 1
+            if items and all(KEY_VALUE_RE.match(it) for it in items):
+                flush_para()
+                for it in items:
+                    emit(f"<p>{render_inline(it)}</p>")
+                i = j
+                continue
+
         if re.match(r"^\s*(?:\d+\.|[-*])\s+", line):
             flush_para()
             in_decisions_section = current is not None and OWNER_DECISION_TITLE_RE.search(current.title)
@@ -342,7 +356,7 @@ def render_plan_html(md_text: str, source_label: str, sidebar_html: str | None =
     body_sections = []
     for s in sections:
         tag = "h2" if s.level == 2 else "h3"
-        milestone_match = MILESTONE_TITLE_RE.match(s.title) if s.level == 3 else None
+        milestone_match = MILESTONE_TITLE_RE.match(s.title) if s.level in (2, 3) else None
         if milestone_match:
             title_text = s.title
             done_match = DONE_SUFFIX_RE.search(title_text)
@@ -350,7 +364,7 @@ def render_plan_html(md_text: str, source_label: str, sidebar_html: str | None =
             if done_match:
                 title_text = title_text[: done_match.start()].rstrip()
                 badge_html = f' <span class="done">{html.escape(done_match.group(1).lower())}</span>'
-            heading_html = f'<h3 id="{s.anchor}">{html.escape(title_text)}{badge_html}</h3>'
+            heading_html = f'<{tag} id="{s.anchor}">{html.escape(title_text)}{badge_html}</{tag}>'
             body_sections.append(f'<div class="milestone">{heading_html}{"".join(s.html_parts)}</div>')
         else:
             body_sections.append(f'<{tag} id="{s.anchor}">{html.escape(s.title)}</{tag}>')

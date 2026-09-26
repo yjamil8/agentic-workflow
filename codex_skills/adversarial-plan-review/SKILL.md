@@ -13,9 +13,9 @@ decision, not the people who proposed it. A clear review may have zero findings.
 ## Load the governing contracts
 
 1. Read the applicable repository `AGENTS.md` files.
-2. Read `strategies/Agent_AdversarialPlanReviewer.md` in full. It is
+2. Read `<agentic-workflow-root>/strategies/Agent_AdversarialPlanReviewer.md` in full. It is
    the judgment contract and controls this review.
-3. Read `strategies/Agent_Table_Collaboration_Rules.md` in full.
+3. Read `<agentic-workflow-root>/strategies/Agent_Table_Collaboration_Rules.md` in full.
 4. Read and follow the installed `rally` skill for table identity, claiming,
    advancing, notification, replay, and pause mechanics. This skill does not
    replace Rally transport.
@@ -27,7 +27,7 @@ reading the ordinary review's reasoning until after independent inspection.
 
 The normal owner input is only the table ID while invoking Rally and this
 skill. Treat that as complete input. Search `TABLE.md` files under
-`agent_tables` for the exact ID, require one unique match, and join
+`agent_tables/` at the root of the work repo you are in for the exact ID, require one unique match, and join
 that table as `plan_challenger`. Resolve the current turn, assignment, exact
 plan, approval artifact, worktree, and counterpart sessions from the table.
 Do not ask the owner to provide information already recorded there. Do not
@@ -120,5 +120,5 @@ re-review first, then perform a focused closure review. Preserve finding IDs.
 Do not add a review of the challenger, restart unrelated approvals, or create
 approval-record-only commits.
 
-This review grants no authority to implement, merge, promote content, write to
+This review grants no authority to implement, merge, release data or content, write to
 production, or deploy.

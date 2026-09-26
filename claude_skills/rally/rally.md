@@ -79,7 +79,9 @@ during the turn, not only the final handoff notification.
 
 ## Locate and enter
 
-1. Read applicable `AGENTS.md`/`CLAUDE.md`, then read
+1. Paths under `strategies/` in this doc are relative to the toolkit root
+   (two directories above this file), not to your working directory.
+   Read applicable `AGENTS.md`/`CLAUDE.md`, then read
    [`strategies/Agent_Table_Collaboration_Rules.md`](../../strategies/Agent_Table_Collaboration_Rules.md)
    in full. Do this before creating a table as well as before joining one; it
    is the actual contract for every seat's duties (the UI presentation
@@ -87,14 +89,13 @@ during the turn, not only the final handoff notification.
    handling), not a legacy-tables-only reference. This document is the
    transport/routing layer only, exactly as described above. Use an explicit
    table path when supplied; otherwise use `rg --files --hidden -g TABLE.md`
-   in the workspace's table directory (`agent_tables` at this repo's root).
+   in the table directory: `agent_tables/` at the root of the work repository you are operating in (never inside the agentic-workflow toolkit checkout).
    Match the exact table name or uniquely matching goal. If more than one
    matches, ask which one. Never silently create another table when the
    request is to join.
 2. On **create and join**, first check for an existing matching table.
    Create only on explicit owner instruction. Use a shared absolute path,
-   normally `agent_tables/<goal-slug>/TABLE.md` (or `agent_tables`
-   elsewhere). Record the goal, authorized scope, role assignments, and
+   normally `<work-repo-root>/agent_tables/<goal-slug>/TABLE.md`. Record the goal, authorized scope, role assignments, and
    first useful task. Read-only coordination does not need an implementation
    plan; implementation follows the plan gate above. Do not add unrelated
    gates.
@@ -283,10 +284,11 @@ mutation.
   ambiguous "do what we discussed" message or a dense table-only
   substitute. The recipient checks scope and approval before
   implementation and requests missing context directly from the sender.
-- Before completing a turn that ran Angular work, apply the root `AGENTS.md`
-  cache thresholds. Clean the cache or record its exact path, size, reason for
-  deferral, and next cleanup actor; unexplained agent-created caches or
-  worktrees make the handoff incomplete.
+- Before completing a turn that ran builds, tests, or dev servers, apply the
+  build-cache and worktree cleanup rules in `AGENTS.md`'s Collaboration Rules.
+  Clean what you created or record its exact path, size, reason for deferral,
+  and next cleanup actor; unexplained agent-created caches or worktrees make
+  the handoff incomplete.
 
 ## Handoff ownership and stopping rules
 

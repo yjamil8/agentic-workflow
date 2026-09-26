@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Local viewer for this repo's implementation_plans/ tree.
+"""Local viewer for an implementation_plans/ tree.
+
+By default it serves ./implementation_plans under the current directory, so
+run it from the root of the repo whose plans you want to read, or pass
+--plans-dir.
 
 Renders each plan's markdown into the styled reading format (see
 plan_renderer.py) with a sidebar listing recent plans and a table of
@@ -8,6 +12,7 @@ static files from the repo root.
 """
 from __future__ import annotations
 
+import argparse
 import html
 import sys
 import urllib.parse
@@ -20,8 +25,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from plan_renderer import render_plan_html  # noqa: E402
 
 
-ROOT = Path(__file__).resolve().parent.parent
-PLANS_DIR = (ROOT / "implementation_plans").resolve()
+PLANS_DIR = (Path.cwd() / "implementation_plans").resolve()
+ROOT = PLANS_DIR.parent
 
 
 class PlanViewerHandler(SimpleHTTPRequestHandler):
@@ -84,7 +89,7 @@ class PlanViewerHandler(SimpleHTTPRequestHandler):
 
         more_link = ""
         if remaining > 0:
-            more_link = f'<a class="sidebar-more" href="/plans">+{remaining} more &mdash; view all plans</a>'
+            more_link = f'<a class="sidebar-more" href="/plans">+{remaining} more: view all plans</a>'
 
         return (
             '<div class="sidebar-section"><a class="sidebar-home" href="/plans">All plans</a></div>'
@@ -111,7 +116,7 @@ class PlanViewerHandler(SimpleHTTPRequestHandler):
 
         try:
             md_text = candidate.read_text(encoding="utf-8")
-            source_label = f"implementation_plans/{rel_path}"
+            source_label = f"{PLANS_DIR.name}/{rel_path}"
             sidebar_html = self._build_sidebar_html(rel_path)
             body = render_plan_html(md_text, source_label, sidebar_html=sidebar_html).encode("utf-8")
         except Exception as exc:
@@ -154,15 +159,24 @@ a:hover{{text-decoration:underline;}}
 
 
 def main() -> int:
-    port = 8765
-    if len(sys.argv) > 1:
-        port = int(sys.argv[1])
+    global PLANS_DIR, ROOT
+    parser = argparse.ArgumentParser(description="Serve rendered implementation plans.")
+    parser.add_argument("port_arg", nargs="?", type=int, help=argparse.SUPPRESS)
+    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--plans-dir", default=None,
+                        help="Directory of plan .md files (default: ./implementation_plans)")
+    args = parser.parse_args()
+    port = args.port_arg or args.port
+    if args.plans_dir:
+        PLANS_DIR = Path(args.plans_dir).expanduser().resolve()
+        ROOT = PLANS_DIR.parent
 
     if not PLANS_DIR.is_dir():
         print(f"warning: {PLANS_DIR} does not exist yet; the plan index will be empty", file=sys.stderr)
 
     server = ThreadingHTTPServer(("127.0.0.1", port), PlanViewerHandler)
     print(f"Implementation plan viewer running at http://127.0.0.1:{port}/plans")
+    print(f"Serving plans from {PLANS_DIR}")
 
     try:
         server.serve_forever()

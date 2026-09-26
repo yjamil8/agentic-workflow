@@ -68,7 +68,7 @@ write its review artifact and table handoff. It must not:
   decision when the evidence materially changes that choice
 - replace a required domain specialist, such as a product-domain expert or a
   release/deployment specialist, where your team has established one
-- authorize merge, content promotion, a production write, or deployment
+- authorize merge, a data/content release, a production write, or deployment
 
 If the assigned session is not independent, it records the conflict and
 returns the turn for reassignment. It never simulates independence by changing
@@ -310,7 +310,7 @@ For changes with runtime or data consequences, inspect:
 - migration, backfill, cutover, recheck, and stop conditions
 - observability that distinguishes expected absence from silent failure
 - rollback behavior after partial application or new writes
-- exact production/content-promotion authority boundaries
+- exact production and data/content-release authority boundaries
 
 Do not demand an operations program for a local mechanical change. Do not clear
 a production-sensitive plan whose safe rollout depends on unowned or impossible

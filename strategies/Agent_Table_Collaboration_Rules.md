@@ -566,7 +566,7 @@ plans, specialist reviews, or approval-record-only commits.
 The planner researches the requested change and produces the implementation
 plan. It must follow the repository's implementation-plan and product-rule
 provenance requirements, including inspecting the relevant code, contracts,
-tests, configuration, runbooks, and deployment or content-promotion surfaces.
+tests, configuration, runbooks, and deployment or data/content-release surfaces.
 
 If the work involves UI changes, particularly new components, the plan must
 meet the UI presentation approval gate above. Do not leave brand consistency,
@@ -753,8 +753,8 @@ still name the new exact candidate refs.
 
 QA does not deploy and does not treat an unexecuted or blocked test as passed.
 Domain-specific audits remain governed by their own contracts. For example, a
-broad question-bank audit is not automatically authorized merely because a
-workstream reached QA.
+broad audit of a large production data set is not automatically authorized
+merely because a workstream reached QA.
 
 ### Deployment Agent
 
@@ -771,7 +771,8 @@ reversible preparation such as:
 - reviewing deployment and migration requirements
 - preparing release pins or a reviewable release candidate when authorized
 - running the required validate-only or readiness checks
-- identifying separate DB/content promotion work
+- identifying separate data or content release work that an app deploy does
+  not carry
 - writing a dated deployment-readiness artifact linked to the governing plan
 
 Passing all table gates does not authorize production deployment. A table
@@ -1020,8 +1021,8 @@ chat.
 ### 9. Deploy And Verify, When Explicitly Approved
 
 The deployment agent uses the approved production lane, records exact deployed
-refs, completes post-deploy verification, identifies any separate content
-promotion state, and marks the table complete or routes a failure appropriately.
+refs, completes post-deploy verification, identifies any separate data or
+content release state, and marks the table complete or routes a failure appropriately.
 
 ## Specialist Drop-In Rules
 

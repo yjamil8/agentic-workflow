@@ -1,255 +1,258 @@
 # Implementation Planning Guide
 
-## Why this guide exists
+How to write an implementation plan that survives independent review in one
+or two rounds. Start from [implementation-plan-template.md](implementation-plan-template.md);
+this guide explains what each part is for and what reviewers actually block on.
 
-This is distilled from a survey of several hundred real implementation plans
-written under this toolkit's Agent Table protocol, cross-checked against what
-[Agent_AdversarialPlanReviewer.md](../strategies/Agent_AdversarialPlanReviewer.md)'s
-challenge lenses actually demand a plan supply. The pattern is consistent: the
-plans that passed independent review cleanly, in one or two rounds, all share
-a recognizable structure and a few specific habits. The plans that took many
-rounds, or that a reviewer had to send back repeatedly, are missing the same
-handful of things almost every time.
+## Where this comes from
 
-The formal structure below is a convention that matured over time in the
-source project, not something every historical plan followed from day one.
-Treat it as the target shape for a new plan, not proof that an old, thinner
-plan was wrong for its moment.
+Derived from a production multi-agent workflow: the structure of 15 plans that
+independent reviewers approved (five of them in round 1), the first-round
+findings of 15 reviews across 12 workstreams (7 of which needed three or more
+rounds), and pattern counts over 290 recent plans. It is not a full read of
+every plan ever written. The conventions matured over time; older plans in
+the source corpus often lack them.
 
-## The canonical section template
+## Before you submit: what reviewers block on
 
-A strong plan for anything non-trivial has these sections, in roughly this
-order. Small, low-stakes changes can compress or drop sections that don't
-apply; the point is what each section is *for*, not filling out a fixed form.
+These are the first-round findings, ranked by how often they occurred. Check
+your plan against each one before handing it to a reviewer.
 
-### 1. Header block
+1. **Incomplete inventory or a wrong premise about current code** (10 findings
+   in 6 of 15 reviews). The plan named two of four call sites, missed a branch,
+   misread a type, or described a state the code cannot reach. Fix: enumerate
+   every call site, branch, writer, and allowlist entry; show the search you
+   ran and its count; say how you know the list is complete.
+2. **An unhandled user state or a path that strands someone** (6). A user
+   partway through a flow, on a cooldown, holding an old link, or on a journey
+   the change silently breaks. Fix: walk every state a real user can be in
+   before, during, and after the change.
+3. **Bigger machinery than needed, or the wrong operational lane** (5). A
+   migration where a release step suffices, an alias layer nobody needs, an
+   unrequested change riding along. Fix: justify every new mechanism against
+   the smallest existing one, inline.
+4. **Untraced absolute claims, or copy not true for every user** (4). "Never",
+   "always", "cannot", "no longer" without the code that enforces it. Fix: cite
+   the enforcing code or soften the claim to what is true.
+5. **UI design or copy left to the coder, or claimed unchanged when it is
+   not** (3). Fix: exact copy and states in the plan (see UI section below).
+6. **A guardrail that is claimed but not enforced by construction** (3). "Caps
+   at N" with nothing capping it. Fix: name the code, constraint, or config
+   that enforces it.
+7. **Undefined measurement or unmeasured assumptions** (3). Events that do not
+   exist, a sample size that contradicts the plan's own evidence, an assumed
+   rate nobody measured. Fix: name the exact event or query and measure first.
+8. **No executable verification for a claim** (2), especially on money or
+   data paths. Fix: exact commands and the observable result that counts as
+   proof.
 
-Title, `Plan version: vN`, `Updated: <date>`, `Status:` (one line naming the
-exact review/authorization state), `Responds to:` (link to the review that
-triggered this version, if any), the governing Agent Table link and ID, the
-plan's viewer URL and repo-relative source path, and the exact inspected
-source identity (commit SHAs per affected repo, with a note if the working
-tree has unrelated local edits).
+The single strongest lesson: most first-round blocks come from inventory that
+was not exhaustive. Time spent proving completeness is the cheapest review
+time you will spend.
 
-This is what lets a reviewer answer "is this the version I already approved,
-or a new one?" without reading the whole plan again.
+## File naming and lifecycle
 
-### 2. Revision history
+- One plan file per workstream:
+  `implementation_plans/MMDDYY/<slug>-plan-YYYYMMDD.md` in the work repo.
+- Update it in place. Never create `plan-v2.md`; bump `Plan version` and add a
+  revision-history entry instead.
+- Record the exact commit containing each submitted version so a review stays
+  bound to what it read.
 
-One bullet per version: the version number, date, and a one-sentence summary
-of what changed *and why* — which finding or owner instruction triggered it.
+## The sections, and what each is for
 
-```markdown
-## Revision history
+### Header
 
-- `v1`, 2026-09-04: Initial researched plan.
-- `v2`, 2026-09-04: Addressed PR-001 (unproven current-behavior claim) and
-  PR-002 (missing rollback); added feature-flag wiring for both services.
+A bullet list at the top (the plan viewer renders it as metadata chips):
+version, updated date, status, the review this version responds to, the Agent
+Table link and ID, and the source path. Recommended for anything touching
+shared code: the inspected source commit per repo, noting unrelated local
+edits. The header answers "is this the version I approved?" without a reread.
+
+### Revision history
+
+One line per version: number, date, what changed, and the finding ID or owner
+instruction that triggered it. It is a decision log, not a changelog; "various
+fixes" tells a reviewer nothing. When a reviewer approves with small
+corrections, a short "Corrections that override the text below" block at the
+top (versioned as, say, v1.1) is an accepted alternative to a full revision.
+
+### Outcome
+
+Two or three sentences stating the decision as the user or operator will
+experience it, followed by the most likely misreading and why it is wrong, and
+an explicit non-goal. Plans that open with a task list instead of an outcome
+invite scope disputes later.
+
+### Current behavior and evidence
+
+Trace every claim about how the system behaves today to a file and symbol,
+with a line number where precision matters. A table is useful for several
+surfaces but not required. What is required is that a reviewer can verify
+each claim in under a minute, and that you state how you established
+completeness (finding 1 above).
+
+### Inventory and compatibility boundary
+
+Three short parts that together prevent findings 1 and 2:
+
+- **Existing data.** What persisted data is affected, with dated counts from a
+  read-only query, and what the evidence rules out as well as what it shows.
+  Partial telemetry showing abandonment is not proof of an error; say so.
+- **Active clients and writers.** Every reader and writer of the changed
+  contract, including older cached clients or deployed versions that will keep
+  sending the old shape for a while.
+- **Reuse decision.** The existing mechanism you are reusing, what it already
+  provides, and an explicit list of what you will not add (table, service,
+  endpoint, migration, framework).
+
+Example, generalized from an approved plan:
+
+```text
+Existing data: the affected rows are append-only event records. No user,
+order, or entitlement record needs reconstruction or backfill; historical rows
+keep their original meaning.
+Active clients and writers: the web client is the only writer of this
+contract, through one ingestion endpoint. Older cached client bundles will
+keep emitting the current subset, so the additive change must accept both.
+Reuse decision: reuse the existing event contract; do not add a table,
+service, endpoint, migration, or general framework. It already carries the
+needed identifiers.
 ```
 
-This is a decision log, not a changelog. A reader should be able to
-reconstruct *why* the plan grew without re-reading every prior round. Avoid
-"various fixes" or "addressed review feedback" — name the finding.
+### Scope and out of scope
 
-### 3. Decision and owner outcome
+Each requirement with its basis: an owner instruction, an existing invariant,
+or the inventory. Then an explicit **Out of scope** list of behavior and
+surfaces that do not change. Most approved small plans have one; it is the
+cheapest defense against both scope creep and "you forgot X" findings.
 
-State the actual behavior or outcome in plain terms, as a product decision,
-before any implementation detail. This is the outcome trace the adversarial
-reviewer's first challenge lens demands, and it should be readable by someone
-who has never seen the codebase.
+### Proposed changes
 
-> Example shape (paraphrased from a real plan, genericized): "Signing in
-> selects the **signed-in account** as the source of truth. A second identity
-> with separate progress is a possible *source for an explicit merge*, not an
-> alternate account silently shown alongside it."
+Numbered per contract or surface. Wherever you introduce a new mechanism, say
+in the same place why the smallest existing one cannot do the job. Name what
+the fix does not introduce as well as what it does.
 
-Notice the shape: it states the decision, then immediately forecloses the
-most likely wrong reading of it. That second sentence is doing real work —
-it's answering "but what about the other case?" before a reviewer has to ask.
+### Feature flags and configuration
 
-### 4. Current behavior and evidence
+If behavior is gated, name each flag, whether it is compile-time or runtime,
+its default per environment, every wiring surface that must change, and
+confirm local development enables it. Production enablement is often a
+separate owner decision; say so explicitly.
 
-A table, not prose: `Surface | Inspected behavior (file:line) | Consequence`.
+### UI presentation (when anything user-visible changes)
 
-Every claim about how the system currently behaves traces to an exact file
-and line, never a paraphrase of what the code "probably does." This is the
-single most reliable signal separating plans that passed review in one round
-from ones that bounced repeatedly: a reviewer can verify a cited claim in
-under a minute, but has to re-derive an uncited one from scratch, and often
-finds it's wrong.
+Reviewers blocked every sampled plan that left this to the coder. The heading
+name varies; the content does not:
 
-### 5. Affected inventory (when data or users are involved)
+- exact copy in a table: state, exact string, interaction
+- the existing components and styles being reused
+- behavior at each breakpoint
+- accessibility: focus, announcements, touch targets
+- a screenshot gate naming the before and after states and viewports
 
-Exact counts from a real, read-only query, with the query's date and an
-explicit statement of what it does and doesn't prove.
+### Milestones and acceptance
 
-> Example shape, genericized from a real incident plan: "23 page views, four
-> distinct visitors in the affected window. No newly created order, session,
-> or provider-callback rows in that window." The plan then states plainly:
-> "Abandonment alone does not establish an error or its root cause."
+For work that spans several surfaces or users, organize milestones around
+journeys that can be demonstrated on their own ("Merged accounts keep their
+in-progress work"), each spanning every layer it needs, rather than around
+layers ("backend", "frontend", "tests"). For a small single-surface change,
+ordered steps are fine; approved plans use both.
 
-State what the evidence *rules out*, not only what it shows. Overclaiming a
-root cause from partial telemetry is a common, expensive mistake; a plan that
-explicitly bounds its own evidence is more trustworthy, not less.
+Acceptance criteria are concrete scenarios, including the awkward ones:
 
-### 6. Required behavior and boundaries
+> An account with both a completed and an active attempt on the same item:
+> the first merge and a later separate re-entry both resume the same active
+> attempt, not a new one.
 
-A table: `Requirement | Basis`. Each requirement traces to an owner
-instruction, an existing invariant, or the affected inventory above — never
-to "it would be good practice" alone. This turns the first challenge lens
-(outcome and scope trace) into something a reviewer can check line by line
-instead of having to infer from the narrative.
+Not "add integration tests". Also require that each new regression test fails
+on the base commit before the fix; a test that passes before the fix proves
+nothing.
 
-### 7. Proposed contracts and implementation
+### Verification
 
-Numbered sections per surface or contract. For each new piece of machinery,
-state explicitly why the smallest existing mechanism can't do the job.
+Exact commands and the observable result that counts as passing, for example
+"a request to endpoint X is observed with field Y", plus any dated post-deploy
+read-only check. On money and data paths, verification must exercise the real
+path, not a mock of it.
 
-> Example shape: "A new narrow read endpoint is justified because the
-> existing paginated list endpoint does not expose the relation needed to
-> prove ownership before the merge step; extending it would leak that
-> relation to every caller of the list endpoint, not just this one."
+### Rollback
 
-This pre-empts the adversarial reviewer's "can an existing service already do
-this?" question inline, instead of waiting for it to come back as a finding
-in the next round.
+Three parts, in this order:
 
-### 8. UI presentation, exact approved scope (when user-visible)
+1. **Measure the blast radius first** with a read-only query and today's
+   dated result, so whoever runs the rollback sees the number before acting.
+2. **Ordered steps**, in one transaction where data is involved.
+3. **What is kept and what is lost**, including accepted collateral.
 
-Required whenever the change touches anything a user sees, per the
-[UI presentation approval gate](../strategies/Agent_Table_Collaboration_Rules.md#ui-presentation-approval-gate).
-It doesn't need a fixed heading name, but it needs this content:
+Then state the invariant rollback must preserve. Example, generalized from an
+approved plan:
 
-- exact copy in a table (`State | Exact copy | Interaction`), not "reasonable
-  copy" or "something like..."
-- named component/style reuse — pull from what already exists; a new shared
-  token or component for a one-off change is a flag, not a default
-- explicit responsive breakpoints and behavior
-- accessibility behavior: focus handling, live-region announcements, touch
-  target sizing
-- a stated screenshot gate: exactly which before/after states must be
-  captured, and at what viewports
+```text
+Measure first: count the parent batches that contain generated records and
+the unrelated records inside them (today: 1 batch, 0 unrelated records).
+Then, in one transaction: delete the parent batches that contain generated
+records (children cascade), then delete the remaining generated records.
+Records a user later promoted by hand are intentionally kept. Any other
+in-progress record inside a deleted batch is lost; that is acceptable for a
+rollback and is stated here.
+```
 
-Putting exact copy in a table before implementation starts is what lets a
-reviewer approve *wording*, not a vague impression, and stops the person
-implementing from improvising tone.
+### Risks and misreadings
 
-### 9. Working milestones and acceptance
+Name the risks, and also the signals that will look like good or bad news but
+are not. For example: "Sign-ups rise after the fix because the count was
+previously under-reported; do not read it as a campaign improvement."
 
-Milestones are end-to-end user journeys, not architectural layers. "Account
-merge completes and stays usable" is a milestone; "backend," "frontend," and
-"tests" are not — they're a waterfall wearing a milestone's name, and they
-force the coder to hand off before anything is actually demonstrable.
+### Release, effort, and authority
 
-Acceptance criteria are concrete scenarios, including edge cases, not test
-categories:
+A rough effort estimate (broken down when over a day), a stopping rule ("if X
+or Y turns out to be true, stop that work and return to the owner with smaller
+alternatives"), and which steps need separate explicit owner approval.
+Implementation approval is never merge or production approval.
 
-> Good: "a canonical account with both a prior completed attempt and an
-> active attempt on the same item: the first merge and a later, separate
-> re-entry into the same flow must both resume the exact same in-progress
-> attempt, not create a second one."
->
-> Not this: "add integration tests for the merge flow."
+### Owner decisions required
 
-The first is executable and falsifiable by a reviewer without reading the
-implementation. The second isn't a criterion at all.
+Give each decision an ID and state the exact choice, the options with their
+consequences, the default if the owner does not answer, the seat that resumes,
+and your recommendation. The plan viewer renders this section as decision
+cards when each item ends with `Recommendation: ...`.
 
-### 10. Release and limits
+### Review request
 
-A rough effort estimate, an explicit statement of what this plan does and
-does not authorize (implementation approval is not deployment approval),
-and rollback stated as an **invariant**, not a script:
+What is new in this version, what is retained from a prior approval, and the
+known limits of your evidence. For later rounds, a disposition of each prior
+finding by ID. When earlier versions were withdrawn for real mistakes, a short
+"do not reintroduce" list keeps the implementer from repeating them.
 
-> Example shape: "Rollback must leave previously merged accounts under their
-> canonical owner; never attempt to move them back by restoring older UI
-> code." That's a constraint on what rollback must *preserve*. A list of
-> commands to run is far more brittle, because the actual state of the system
-> may have moved on by the time rollback is needed.
+## Anti-patterns
 
-### 11. Review request and residuals
+1. **No provenance.** No version, no inspected commit, no link to the review it
+   answers. Nobody can bind an approval to it.
+2. **Spec voice instead of decision voice.** "Add a workflow where an operator
+   can..." describes a feature, not a traced outcome with a reason.
+3. **No acceptance criteria or rollback.** Target architecture without a way
+   to know it is done or to undo it.
+4. **Uncited current-state claims.** "The existing flow already supports X"
+   with nothing a reviewer can check, which is often wrong when checked.
+5. **Layer-shaped milestones for a cross-layer journey.** When one user
+   journey spans several layers and no milestone can be demonstrated on its
+   own, the plan was not organized around the outcome.
 
-Tell the reviewer exactly what's new to assess in this round versus what's
-retained from a prior approval, and name the known limits of the evidence
-gathered so far. Don't make the reviewer guess which parts changed.
+## Calibrating length
 
-## Do-this best practices
-
-1. **State what the evidence rules out, not just what it shows.** A partial
-   telemetry read that shows abandonment is not proof of an error; say so
-   explicitly rather than let the reader assume causation.
-2. **Trace every current-behavior claim to file:line.** This is the highest-
-   leverage single habit in the whole survey. It converts a review from "is
-   this plausible?" to "is this cited claim actually true?" — a much faster
-   and much more reliable question to answer.
-3. **Justify new machinery against the smallest existing alternative,
-   inline**, in the section that proposes it, not as a defensive afterthought
-   if a reviewer pushes back.
-4. **Give acceptance criteria as real scenarios**, including the awkward
-   concurrent/expired/wrong-owner/stale-cache cases, not test categories.
-5. **Make the revision history a decision log.** Name the finding ID or
-   owner instruction that triggered each version bump. A plan that grew to
-   seven revisions over two days of an incident stayed coherent specifically
-   because each entry named its trigger in one sentence.
-6. **State rollback as an invariant**, i.e. what must remain true afterward,
-   not a runbook of commands that may not match the system's state by the
-   time it's needed.
-7. **Put UI copy in a table with exact strings**, before implementation, not
-   as a placeholder to be finalized later.
-8. **Name what the smallest fix does *not* introduce.** "This adds no new
-   schema, index, service, or migration; do not substitute a generic
-   framework for what is one narrow query fix." Explicitly ruling out
-   over-engineering is as load-bearing as describing the fix itself, and it
-   directly forecloses the most common reason small fixes balloon in review.
-
-## Anti-patterns to avoid
-
-1. **No provenance metadata.** No version number, no reviewed-commit
-   identity, no link to a review artifact. A reader can't tell what was
-   actually inspected, when, or bind an approval to an exact identity.
-2. **Spec-document voice instead of decision voice.** "Add a new workflow
-   where an operator can..." reads like a feature request, not a traced
-   outcome with a stated *why*. It starves the outcome-trace and
-   customer-common-sense challenge lenses of anything to check.
-3. **No acceptance criteria or rollback section at all.** Describing target
-   architecture without describing how to know it's done, or how to undo it
-   if it's wrong, is the single most common reason a plan needs another
-   round.
-4. **Current-state claims with no file:line citation.** "Existing behavior
-   already supports X" as a bare assertion forces the reviewer to re-derive
-   the claim from scratch — and it is often wrong when checked.
-5. **Waterfall-by-layer structure.** Sections named after architectural
-   layers ("Service A," "Service B," "Tests") instead of user-visible
-   journeys are a strong signal the plan wasn't actually organized around the
-   outcome. The strongest plans consistently span all affected layers within
-   one journey-shaped milestone.
-
-## Versioning in practice
-
-Use `Plan version: vN` from the first draft, even for a plan you expect to
-approve in one round. It costs nothing when unused and is exactly what's
-missing from the plans that bounced hardest in the survey. When a version
-bump happens, tie it to an exact finding ID or owner instruction in the
-revision history — not "various fixes."
-
-## Length and scope calibration
-
-The strongest plans are long in **evidence density**, not in scope. A tightly
-scoped plan covering one coherent outcome across a few milestones, with
-exhaustive edge-case enumeration, can be short. A plan that grows across many
-revisions while tracking a real, evolving incident can be long without
-sprawling, as long as each addition is small, individually justified, and
-tied to a real trigger. The anti-pattern is breadth without evidence — a
-short plan that skips citations and acceptance criteria — not length itself.
-Don't pad a plan to look thorough; don't compress it past the point where its
-claims are checkable.
+The best plans are dense with evidence, not broad in scope. A tightly scoped
+plan with exhaustive edge cases can be short. A plan can also grow long across
+many incident-driven revisions without sprawling, provided each addition is
+small, justified, and tied to a named trigger. Do not pad a plan to look
+thorough, and do not compress it past the point where its claims are
+checkable.
 
 ## See also
 
-- [Agent_AdversarialPlanReviewer.md](../strategies/Agent_AdversarialPlanReviewer.md) —
-  the challenge lenses a plan should be able to survive.
-- [Agent_Table_Collaboration_Rules.md](../strategies/Agent_Table_Collaboration_Rules.md) —
-  plan versioning mechanics, the UI presentation approval gate, and immutable
-  dated reviews.
-- [scripts/serve_implementation_plans.py](../scripts/serve_implementation_plans.py) —
-  render `implementation_plans/*.md` into a readable, linkable view while
-  writing or reviewing one.
+- [Agent_AdversarialPlanReviewer.md](../strategies/Agent_AdversarialPlanReviewer.md):
+  the challenge lenses a plan must survive after ordinary approval.
+- [Agent_Table_Collaboration_Rules.md](../strategies/Agent_Table_Collaboration_Rules.md):
+  versioning, immutable dated reviews, and the UI presentation gate.
+- `scripts/serve_implementation_plans.py`: render a plan while you write or
+  review it.

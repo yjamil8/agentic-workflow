@@ -11,21 +11,39 @@ production use elsewhere. It has no product code and no company-specific
 policy in it; adapt the illustrative examples (service names, ports, stacks)
 to whatever repo you drop this into.
 
-## Scope
+## Scope And Precedence
 
-These instructions apply to any agent working anywhere inside this
-workspace, and to any other repository that adopts this file (directly, by
-reference, or by copy) as its own `AGENTS.md`/`CLAUDE.md`.
+`scripts/install-local.sh` loads this file as global instructions for Claude
+Code (`~/.claude/CLAUDE.md`) and Codex (`~/.codex/AGENTS.md`), so these rules
+apply in every repository you work in, not only this toolkit checkout.
+
+- A repository's own `AGENTS.md`/`CLAUDE.md`, and your team's written
+  policies, take precedence over this file wherever they conflict. This file
+  fills gaps; it never overrides the team's rules on branching, review,
+  deployment, or tooling.
+- Paths in this file (`strategies/...`, `guides/...`, `scripts/...`) are
+  relative to the toolkit root, `<agentic-workflow-root>`, not to the repo
+  you are working in.
+- Agent Tables and implementation plans live in the work repository itself:
+  `<work-repo-root>/agent_tables/` and `<work-repo-root>/implementation_plans/`.
+  Unless the team has adopted them, keep them out of commits by listing both
+  in that repo's `.git/info/exclude` (local-only, never committed);
+  `scripts/init-work-repo.sh` does this. Never stage them into a team PR
+  without the owner's explicit instruction.
 
 ## Repository Layout
 
 ```text
-AGENTS.md                              <- this file (CLAUDE.md symlinks to it)
+AGENTS.md                              <- this file
+CLAUDE.md                              <- imports AGENTS.md (@AGENTS.md)
 strategies/
   Agent_Table_Collaboration_Rules.md   <- the Agent Table protocol contract
   Agent_AdversarialPlanReviewer.md     <- the plan_challenger judgment contract
+guides/
+  implementation-planning-guide.md     <- how to write a strong plan
+  implementation-plan-template.md      <- copy this to start a plan
 agents/
-  pr-review-specialist.md              <- Claude Code subagent (GitHub MCP)
+  pr-review-specialist.md              <- Claude Code PR reviewer (GitHub MCP or gh)
 commands/
   review.md                            <- lightweight solo-review checklist
 claude_skills/
@@ -34,16 +52,13 @@ claude_skills/
 codex_skills/
   rally/                               <- Rally, Codex transport
   adversarial-plan-review/             <- canonical adversarial-plan-review skill
-  pr-review/                           <- Codex PR-review skill (gh CLI)
-agent_tables/                          <- live Agent Table workstreams go here
-implementation_plans/                  <- canonical implementation plans go here
-guides/
-  implementation-planning-guide.md     <- how to write a strong plan
+  pr-review/                           <- Codex PR reviewer (gh CLI)
 scripts/
-  list-stale-worktrees.sh              <- worktree cleanup audit
-  install-local.sh                     <- one-time seed installer
-  plan_renderer.py                     <- markdown -> styled HTML plan renderer
+  install-local.sh                     <- installs commands, skills, global instructions
+  init-work-repo.sh                    <- prepares a work repo for tables and plans
   serve_implementation_plans.py        <- local plan viewer (port 8765)
+  plan_renderer.py                     <- markdown -> styled HTML plan renderer
+  list-stale-worktrees.sh              <- worktree cleanup audit
 ```
 
 ## Planning, Scope, And Review Discipline
@@ -81,9 +96,10 @@ Table protocol instead of the owner relaying messages between chats:
   thin pointer for Claude at [claude_skills/adversarial-plan-review/command.md](claude_skills/adversarial-plan-review/command.md))
   for how to run it. The `plan_challenger` must be a different session from
   both the planner and the ordinary plan reviewer.
-- For a solo, low-stakes change, skip the table and adversarial-review
-  machinery entirely; they exist for coordinated multi-agent work and
-  consequential plans, not every edit.
+- A solo, low-stakes change that does not warrant a written plan needs no
+  table and no adversarial review. The machinery exists for coordinated
+  multi-agent work and consequential plans, not every edit. Once a written
+  implementation plan exists, the challenge gate applies unless waived.
 
 ## PR / Code Review
 
@@ -188,27 +204,27 @@ Every new feature flag must be enabled in the normal local development lane whil
 
 ## Implementation Plans
 
-Keep exactly one canonical implementation-plan file per workstream under
-`implementation_plans/`, linked from the workstream's Agent Table. See
-[Agent_Table_Collaboration_Rules.md](strategies/Agent_Table_Collaboration_Rules.md)
-for the full plan-versioning and review-round conventions (`v1`, `v2`, ...,
-revision history, immutable dated reviews), and
-[guides/implementation-planning-guide.md](guides/implementation-planning-guide.md)
-for how to actually write a strong plan (structure, what belongs in each
-section, worked examples, anti-patterns).
+Keep exactly one canonical plan file per workstream in the work repo, at
+`<work-repo-root>/implementation_plans/MMDDYY/<slug>-plan-YYYYMMDD.md`, linked
+from the workstream's Agent Table and updated in place (never a new file per
+version). Start from
+[guides/implementation-plan-template.md](guides/implementation-plan-template.md)
+and follow [guides/implementation-planning-guide.md](guides/implementation-planning-guide.md).
+Versioning, review rounds, and the UI presentation gate are defined in
+[Agent_Table_Collaboration_Rules.md](strategies/Agent_Table_Collaboration_Rules.md).
 
-Run the local rendered-plan viewer with:
+Run the local plan viewer from the work repo's root:
 
 ```bash
-python3 scripts/serve_implementation_plans.py        # http://127.0.0.1:8765/plans
+python3 <agentic-workflow-root>/scripts/serve_implementation_plans.py   # http://127.0.0.1:8765/plans
+# or from anywhere:
+python3 <agentic-workflow-root>/scripts/serve_implementation_plans.py --plans-dir <work-repo-root>/implementation_plans
 ```
 
-It renders every `.md` file under `implementation_plans/` into a styled
-reading view with a table of contents, milestone/decision-card formatting,
-and a sidebar of recent plans, no separate build step. When citing a plan in
-a table entry, handoff, or message to the owner, link both the viewer URL
-and the repo-relative `.md` source path; the viewer is a formatted reading
-view, the `.md` path is the exact reviewed source, and neither replaces the
-other. Quickly confirm a viewer URL actually resolves before sending it
+When citing a plan in a table entry, handoff, or message to the owner, link
+both the viewer URL (`http://127.0.0.1:8765/plan/<path-relative-to-implementation_plans>`)
+and the repo-relative `.md` source path. The viewer is a formatted reading
+view and the `.md` file is the exact reviewed source; neither replaces the
+other. Confirm the URL resolves before sending it
 (`curl -s -o /dev/null -w '%{http_code}' <url>`); if the server is not
 running, start it or say so instead of handing over a dead link.

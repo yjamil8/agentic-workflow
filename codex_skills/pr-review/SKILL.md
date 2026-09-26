@@ -59,48 +59,61 @@ not just the diff lines, before judging correctness.
   optimizations)
 - **NIT**: optional polish (naming, formatting, style preferences)
 
-## Post inline comments
+## Submit one review with all inline comments
 
-Use the GitHub API for inline comments bound to exact file/line/side, since
-`gh pr review` alone cannot attach per-line comments:
+Post everything as a single review, not one API call per comment: separate
+calls notify the PR author once per comment. Write the review payload to a
+temporary JSON file (this also avoids shell-quoting problems with multi-line
+bodies and `suggestion` fences), then submit it once:
 
-```bash
-gh api repos/<owner>/<repo>/pulls/<number>/comments \
-  -f body='**MAJOR**: <one-sentence rationale>
-
-```suggestion
-<replacement code>
-```' \
-  -f commit_id="$(gh pr view <number> --repo <owner/repo> --json headRefOid --jq .headRefOid)" \
-  -f path='<file path>' \
-  -F line=<line number> \
-  -f side=RIGHT
-```
+~~~bash
+HEAD_SHA="$(gh pr view <number> --repo <owner/repo> --json headRefOid --jq .headRefOid)"
+cat > /tmp/pr-review.json <<'JSON'
+{
+  "commit_id": "<HEAD_SHA>",
+  "event": "COMMENT",
+  "body": "<summary: severity tally, checklist, verdict>",
+  "comments": [
+    {
+      "path": "src/example.ts",
+      "line": 42,
+      "side": "RIGHT",
+      "body": "**MAJOR**: <one-sentence rationale>\n\n```suggestion\n<replacement code>\n```"
+    }
+  ]
+}
+JSON
+sed -i "s/<HEAD_SHA>/$HEAD_SHA/" /tmp/pr-review.json
+gh api repos/<owner>/<repo>/pulls/<number>/reviews --method POST --input /tmp/pr-review.json
+rm -f /tmp/pr-review.json
+~~~
 
 Each comment: a severity tag, one-sentence rationale, and a concrete fix or
-`suggestion` block when applicable. Batch comments; cap total at ~40,
-consolidating related nits into one comment rather than one each.
+`suggestion` block when applicable. Cap the review at ~40 comments,
+consolidating related nits into one comment rather than one each. `line`
+must fall inside a hunk of the PR diff (use `side: "LEFT"` for a deleted
+line); GitHub rejects the whole review with HTTP 422 otherwise, so move any
+comment that cannot be anchored into the summary body with a quoted code
+block instead of guessing a line.
 
-## Submit the summary review
+## Summary and verdict
 
-```bash
-gh pr review <number> --repo <owner/repo> --request-changes --body '<summary>'
-# or --comment / --approve
-```
-
-The summary includes a tally of issues by severity, a checklist
+The `body` includes a tally of issues by severity, a checklist
 (Correctness/Security/Tests/Performance/Documentation, each ✅ or ❌), and the
-final verdict:
+final verdict, set through `event`:
 
-- `--request-changes` if any BLOCKER exists
-- `--comment` if only MINOR/NITs
-- `--approve` if clean
+- `REQUEST_CHANGES` if any BLOCKER exists
+- `COMMENT` if only MINOR/NITs
+- `APPROVE` if clean
+
+GitHub does not allow `APPROVE` or `REQUEST_CHANGES` on a PR authored by the
+authenticated account. When reviewing your own PR, submit `COMMENT` and state
+the intended verdict in the first line of the body.
 
 ## Safety rules
 
 Never commit, push, or merge. Never include secrets or internal URLs in
 comments. If `gh` reports a permission error, tell the user instead of
 attempting a workaround credential. If inline comment coordinates cannot be
-established (e.g. line moved outside the diff context `gh api` accepts), fall
-back to quoting the exact code block in the summary review instead of
-guessing a line number.
+established, fall back to quoting the exact code block in the summary body
+instead of guessing a line number.
