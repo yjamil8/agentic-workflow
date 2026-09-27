@@ -3,10 +3,15 @@
 - Plan version: v1
 - Updated: YYYY-MM-DD
 - Status: <draft | in plan review | approved for vN | changes requested (PR-001, PR-002)>
-- Responds to: <link to the review that triggered this version, or "initial plan">
-- Agent Table: <link to TABLE.md> (table ID <uuid>)
+- Agent Table: agent_tables/<workstream>/TABLE.md (table ID <uuid>)
+- Plan viewer: http://127.0.0.1:8765/plan/MMDDYY/<slug>-plan-YYYYMMDD.md
 - Source: implementation_plans/MMDDYY/<slug>-plan-YYYYMMDD.md
-- Inspected source: <repo>@<40-character SHA> (note any unrelated local edits)
+- Repos: <repositories this plan changes>
+- Effort: <rough estimate, for example "about two days plus review">
+- Responds to: <When applicable (v2 onward): link to the review this version answers.>
+- Inspected source: <When applicable (shared code): <repo>@<40-character SHA> per repo; note unrelated local edits.>
+- Review gates: <When applicable: gate state and any owner NO_ADR waiver, copied from TABLE.md. TABLE.md is authoritative.>
+- Tracking ticket: <When applicable: issue or ticket ID.>
 
 ## Revision history
 
@@ -14,120 +19,184 @@
 
 ## Outcome
 
-<Two or three sentences stating the decision in plain language, as the user
-or operator will experience it. Then foreclose the most likely misreading.>
+<Two or three sentences stating the decision as the user or operator will
+experience it. Then the most likely misreading and why it is wrong.>
 
-Non-goals: <what this deliberately does not change>.
+## Owner decisions required
+
+<When applicable: any choice existing authority cannot resolve. Delete this
+section otherwise. Keep it here, near the top, so blocking decisions are seen
+first.>
+
+1. D1: <exact decision>. Blocks: <yes, which milestone | no>. Options: <A,
+   consequence; B, consequence>. Default if unanswered: <A>. Resumes:
+   <seat>. Recommendation: <A, because ...>
 
 ## Current behavior and evidence
 
+<Why this work is needed, traced to code and data.>
+
 | Surface | Inspected behavior (file + symbol, line where precise) | Consequence |
 |---|---|---|
-| <component or endpoint> | `<path/to/file.ext>` `<Symbol>` (`:123`) does X | <what goes wrong or what must be preserved> |
+| <component or endpoint> | `<path/to/file>` `<Symbol>` (`:123`) does X | <what goes wrong or must be preserved> |
 
-Completeness: <the exact search you ran to find every call site, branch,
-writer, and allowlist entry, for example `rg -n "SymbolName" src/`, and the
-count it returned>.
+Completeness: <the exact search, for example `rg -n "SymbolName" src/`, its
+count, and how you know every call site, branch, writer, and allowlist entry
+is covered>.
 
 ## Inventory and compatibility boundary
 
+<When applicable: persisted data, an API or event contract, or its clients or
+writers change. Delete this section otherwise.>
+
 ### Existing data
 
-<What persisted data is affected. Dated counts from a read-only query, and
-what those counts do and do not prove.>
+<Affected persisted data, dated counts from a read-only production query, and
+what the counts do and do not prove.>
 
 ### Active clients and writers
 
-- <Every writer and reader of the changed contract, including older cached
-  clients or deployed versions still sending the old shape.>
+- <Every reader and writer, including cached web or mobile clients and
+  deployed service versions that will keep sending the old shape.>
 
 ### Reuse decision
 
-Reuse <existing mechanism>; it already provides <needed property>. Do not add
-<table, service, endpoint, migration, framework> for this change.
+Reuse <existing mechanism>; it already provides <property>. Do not add
+<table, service, endpoint, migration, framework>.
 
-## Scope
+## Requirements and out of scope
 
-<Each requirement and its basis: an owner instruction, an existing
-invariant, or the inventory above.>
+| Requirement | Basis |
+|---|---|
+| <what must be true when done> | <owner instruction, existing invariant, or inventory> |
 
-### Out of scope
+Out of scope:
 
-- <Explicitly unchanged behavior, surfaces, and data.>
+- <Explicitly unchanged behavior, surfaces, and data, including non-goals.>
 
 ## Proposed changes
 
 ### 1. <Contract or surface>
 
-<What changes and why the smallest existing mechanism is not enough, if new
-machinery is proposed.>
+<How it changes. If new machinery is proposed, why the smallest existing
+mechanism is not enough, and what the change deliberately does not add.>
+
+## Security, privacy, and compliance
+
+<When applicable: authentication, authorization, secrets, personal data,
+payments, or regulated data are touched. Delete this section otherwise.>
+
+- Trust boundaries and authorization checks affected: <...>
+- Personal or regulated data: <what is read, stored, logged, or sent where,
+  and retention>
+- Secrets: <where they live; never in code, plans, or logs>
+- Reviews your organization requires: <security, privacy, legal, or none>
 
 ## Feature flags and configuration
 
-<Flag name, compile-time or runtime, default per environment, every wiring
-surface that must change, and confirmation that local development enables it.
-Write "None" if not applicable.>
+<When applicable: behavior is gated or configuration changes. Delete this
+section otherwise. Flag, compile-time or runtime, default per environment,
+every wiring surface from AGENTS.md "Feature Flag Wiring Discipline", and
+local-development parity.>
 
 ## UI presentation, exact approved scope
 
-<Omit only if nothing user-visible changes.>
+<When applicable: required for any user-visible change, per the UI
+presentation approval gate. Delete this section otherwise.>
 
 | State | Exact copy | Interaction |
 |---|---|---|
 | <state> | "<exact string>" | <what happens> |
 
 Reused components and styles: <names>. Breakpoints: <behavior per width>.
-Accessibility: <focus, announcements, touch targets>. Screenshot gate:
-<before/after states and viewports to capture>.
+Accessibility: <focus, announcements, touch targets>. Icons: <centering and
+text alignment>. Screenshot gate: <before/after states and viewports>.
 
 ## Milestones
 
-### Milestone 1: <User-visible journey that works end to end>
+<When applicable: two or more journeys that can each be demonstrated on their
+own. Delete this section otherwise; acceptance then lives in the next
+section.>
+
+### Milestone 1: <User journey that works end to end>
 
 <Scope across every affected layer for this journey.>
 
 Acceptance:
 
-- <Concrete scenario including edge cases: concurrent, expired, wrong owner,
-  stale cache, retry.>
-- New regression tests fail on the base commit before the fix.
+- <Concrete scenario, including edge cases.>
 
 ### Milestone 2: <Next journey>
 
-## Verification
+## Acceptance and verification
+
+Acceptance scenarios:
+
+- <Concrete scenario including edge cases: signed out, new, returning,
+  partially complete, permission denied, concurrent, expired, stale cache,
+  retry.>
+- Each new regression test fails on the base commit before the fix.
+
+Verification:
 
 ```bash
-<exact commands to run, and the result that counts as passing>
+<exact commands, and the result that counts as passing>
 ```
+
+<Payments and other irreversible paths: prove against the real provider's
+test mode, not a mock.>
 
 ## Rollback
 
-1. Measure the blast radius first (read-only): <query or command and today's
-   dated result>.
+<When applicable: data, configuration, an external system (payment provider,
+identity provider, CDN, third-party service), or anything else a code revert
+does not undo. Delete this section otherwise.>
+
+1. Measure the blast radius first (read-only): <query and today's dated
+   result>.
 2. Ordered steps: <commands, in one transaction where data is involved>.
-3. Kept and lost: <what rollback intentionally preserves, and accepted
-   collateral>.
+3. Kept and lost: <what rollback preserves, and accepted collateral>.
 
 Invariant: <what must remain true after rollback>.
 
 ## Risks and how not to misread results
 
-- <Risk, and what observed signal would or would not indicate a problem.>
+- <Risk, how you would detect it in production (metric, log, alert), and what
+  signal would or would not indicate a problem.>
 
-## Release, effort, and authority
+## Delivery and authority
 
-- Effort: <rough estimate, broken down if more than a day>.
-- Stopping rule: <conditions under which work pauses and returns to the owner
-  with smaller alternatives>.
-- Authority: implementation approval is not merge or production approval.
-  <Name each step that needs separate explicit owner approval.>
+<When applicable: a deploy, data migration or release, external mutation,
+hotfix, multi-repo change, or any step needing separate approval. Delete this
+section otherwise.>
 
-## Owner decisions required
+- Branch and lineage: <worktree, branch, base; for a production hotfix, the
+  exact commit currently deployed, per your release records>.
+- Deploy: <services, environments, and order>.
+- Data or content release: <how it ships separately from the code deploy, if
+  it does>.
+- Change management: <change ticket or approval record, if your organization
+  requires one>.
+- Separate approvals: <each step needing explicit approval>. Plan approval is
+  not merge or production approval.
+- Stopping rule: <conditions that pause work and return to the owner with
+  smaller alternatives>.
 
-1. D1: <exact decision>. Options: <A, consequence; B, consequence>. Default if
-   unanswered: <A>. Resumes: <seat>. Recommendation: <A, because ...>
+## Required updates
+
+<When applicable: keep only the lines this change triggers under your team's
+rules. Delete this section otherwise.>
+
+- Tracking ticket status and next action.
+- Runbooks and on-call documentation.
+- User-facing documentation, help content, or release notes.
+- API documentation or published contracts.
+- Dashboards and alerts.
+- Team agent instructions or skills (AGENTS.md, CLAUDE.md) when the workflow
+  itself changes.
 
 ## Review request
 
-<What is new in this version for the reviewer to assess, what is retained from
-a prior approval, and known limits of the evidence.>
+<When applicable (v2 onward, or any re-review): what is new in this version,
+what is retained from a prior approval, a disposition of each prior finding
+by ID, and the limits of the evidence. Delete this section in v1.>

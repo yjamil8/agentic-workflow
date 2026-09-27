@@ -61,50 +61,82 @@ time you will spend.
 
 ## The sections, and what each is for
 
+Every section is either **always** included or included **when applicable**.
+Delete a when-applicable section that does not apply; never keep it as "N/A".
+Replace every `<placeholder>` or delete its line. The seven always sections
+match the smallest plan in the source survey that reviewers approved in round
+1, so a small plan really can be that short.
+
+| Section | Include | Trigger for optional sections |
+|---|---|---|
+| Header | Always | Optional fields as marked in the template |
+| Revision history | Always | |
+| Outcome | Always | |
+| Owner decisions required | When applicable | A choice existing authority cannot resolve |
+| Current behavior and evidence | Always | |
+| Inventory and compatibility boundary | When applicable | Persisted data, an API or event contract, or its clients or writers change |
+| Requirements and out of scope | Always | |
+| Proposed changes | Always | |
+| Security, privacy, and compliance | When applicable | Authentication, authorization, secrets, personal data, payments, or regulated data |
+| Feature flags and configuration | When applicable | Behavior is gated or configuration changes |
+| UI presentation, exact approved scope | When applicable, then mandatory | Any user-visible change |
+| Milestones | When applicable | Two or more journeys that can each be demonstrated alone |
+| Acceptance and verification | Always | |
+| Rollback | When applicable | Data, config, or an external system a code revert does not undo |
+| Risks and how not to misread results | Always | |
+| Delivery and authority | When applicable | Deploy, data release, external mutation, hotfix, multi-repo, or separate approval |
+| Required updates | When applicable | A documentation or process obligation your team's rules attach to the change |
+| Review request | When applicable | v2 onward, or any re-review |
+
 ### Header
 
-A bullet list at the top (the plan viewer renders it as metadata chips):
-version, updated date, status, the review this version responds to, the Agent
-Table link and ID, and the source path. Recommended for anything touching
-shared code: the inspected source commit per repo, noting unrelated local
-edits. The header answers "is this the version I approved?" without a reread.
+A bullet list directly under the title; the plan viewer renders it as
+metadata chips. Always: version, updated date, status, Agent Table, plan
+viewer URL, source path, repos, and effort. When applicable: the review this
+version responds to, the inspected source commit per repo, the review-gate
+state (including any owner `NO_ADR` waiver, copied from `TABLE.md`, which
+stays authoritative), and the tracking ticket. The header answers "is this the
+version I approved?" without a reread.
 
 ### Revision history
 
 One line per version: number, date, what changed, and the finding ID or owner
-instruction that triggered it. It is a decision log, not a changelog; "various
-fixes" tells a reviewer nothing. When a reviewer approves with small
-corrections, a short "Corrections that override the text below" block at the
-top (versioned as, say, v1.1) is an accepted alternative to a full revision.
+instruction that caused it. "Various fixes" tells a reviewer nothing. When a
+reviewer approves with small corrections, a short "Corrections that override
+the text below" block at the top (as v1.1) is an accepted alternative.
 
 ### Outcome
 
 Two or three sentences stating the decision as the user or operator will
-experience it, followed by the most likely misreading and why it is wrong, and
-an explicit non-goal. Plans that open with a task list instead of an outcome
-invite scope disputes later.
+experience it, followed by the most likely misreading and why it is wrong.
+Plans that open with a task list invite scope disputes later. Non-goals go in
+the out-of-scope list, not here.
+
+### Owner decisions required
+
+Placed directly after the outcome so a blocking decision is seen first. Give
+each an ID (D1, D2), the exact choice, whether it blocks and what, the options
+and consequences, the default if unanswered, the resuming seat, and a trailing
+`Recommendation: ...` (the viewer renders these as decision cards).
 
 ### Current behavior and evidence
 
-Trace every claim about how the system behaves today to a file and symbol,
-with a line number where precision matters. A table is useful for several
-surfaces but not required. What is required is that a reviewer can verify
-each claim in under a minute, and that you state how you established
-completeness (finding 1 above).
+Why the work is needed, traced to code and data. Each claim about today's
+behavior cites a file and symbol, with a line number where precision matters.
+A table helps for several surfaces but is not required. State how you
+established completeness (finding 1 above).
 
 ### Inventory and compatibility boundary
 
-Three short parts that together prevent findings 1 and 2:
+Three parts that together prevent findings 1 and 2:
 
-- **Existing data.** What persisted data is affected, with dated counts from a
+- **Existing data**: what persisted data is affected, with dated counts from a
   read-only query, and what the evidence rules out as well as what it shows.
-  Partial telemetry showing abandonment is not proof of an error; say so.
-- **Active clients and writers.** Every reader and writer of the changed
-  contract, including older cached clients or deployed versions that will keep
-  sending the old shape for a while.
-- **Reuse decision.** The existing mechanism you are reusing, what it already
-  provides, and an explicit list of what you will not add (table, service,
-  endpoint, migration, framework).
+- **Active clients and writers**: every reader and writer of the changed
+  contract, including cached clients and deployed versions that will keep
+  sending the old shape.
+- **Reuse decision**: the existing mechanism reused, what it already provides,
+  and an explicit list of what you will not add.
 
 Example, generalized from an approved plan:
 
@@ -120,73 +152,70 @@ service, endpoint, migration, or general framework. It already carries the
 needed identifiers.
 ```
 
-### Scope and out of scope
+### Requirements and out of scope
 
-Each requirement with its basis: an owner instruction, an existing invariant,
-or the inventory. Then an explicit **Out of scope** list of behavior and
-surfaces that do not change. Most approved small plans have one; it is the
-cheapest defense against both scope creep and "you forgot X" findings.
+What must be true when the work is done, each with its basis (owner
+instruction, existing invariant, or inventory), then an explicit out-of-scope
+list including non-goals. Requirements say what; proposed changes say how.
 
 ### Proposed changes
 
-Numbered per contract or surface. Wherever you introduce a new mechanism, say
-in the same place why the smallest existing one cannot do the job. Name what
-the fix does not introduce as well as what it does.
+Numbered per contract or surface. Wherever a new mechanism appears, say in the
+same place why the smallest existing one cannot do the job, and name what the
+change deliberately does not add.
+
+### Security, privacy, and compliance
+
+The trust boundaries and authorization checks affected, what personal or
+regulated data is read, stored, logged, or sent and for how long, where
+secrets live, and which reviews your organization requires. A plan that
+touches these and says nothing about them should not pass review.
 
 ### Feature flags and configuration
 
-If behavior is gated, name each flag, whether it is compile-time or runtime,
-its default per environment, every wiring surface that must change, and
-confirm local development enables it. Production enablement is often a
-separate owner decision; say so explicitly.
+Each flag, compile-time or runtime, default per environment, and every wiring
+surface in `AGENTS.md` "Feature Flag Wiring Discipline". Confirm local
+development enables it. Production enablement is often a separate owner
+decision; say so.
 
-### UI presentation (when anything user-visible changes)
+### UI presentation, exact approved scope
 
-Reviewers blocked every sampled plan that left this to the coder. The heading
-name varies; the content does not:
+Mandatory for any user-visible change under the
+[UI presentation approval gate](../strategies/Agent_Table_Collaboration_Rules.md#ui-presentation-approval-gate).
+Reviewers blocked every sampled plan that left this to the coder. Include an
+exact copy table, reused components and styles, breakpoints, accessibility,
+icon alignment, and a screenshot gate naming before and after states and
+viewports.
 
-- exact copy in a table: state, exact string, interaction
-- the existing components and styles being reused
-- behavior at each breakpoint
-- accessibility: focus, announcements, touch targets
-- a screenshot gate naming the before and after states and viewports
+### Milestones
 
-### Milestones and acceptance
+For work spanning several independently demonstrable journeys, name each
+milestone after the journey (`### Milestone 1: <journey>`, rendered as a
+milestone card), spanning every layer it needs, with its own acceptance
+scenarios. For a single-journey change, skip this section; ordered steps in
+Proposed changes are fine. Layer-shaped milestones ("backend", "frontend",
+"tests") for a cross-layer journey are an anti-pattern.
 
-For work that spans several surfaces or users, organize milestones around
-journeys that can be demonstrated on their own ("Merged accounts keep their
-in-progress work"), each spanning every layer it needs, rather than around
-layers ("backend", "frontend", "tests"). For a small single-surface change,
-ordered steps are fine; approved plans use both.
+### Acceptance and verification
 
-Acceptance criteria are concrete scenarios, including the awkward ones:
+Concrete scenarios, including the awkward ones:
 
 > An account with both a completed and an active attempt on the same item:
 > the first merge and a later separate re-entry both resume the same active
 > attempt, not a new one.
 
-Not "add integration tests". Also require that each new regression test fails
-on the base commit before the fix; a test that passes before the fix proves
-nothing.
-
-### Verification
-
-Exact commands and the observable result that counts as passing, for example
-"a request to endpoint X is observed with field Y", plus any dated post-deploy
-read-only check. On money and data paths, verification must exercise the real
-path, not a mock of it.
+Not "add integration tests". Add the exact commands and observable results
+that count as passing, and any dated post-deploy read-only check. Each new
+regression test must fail on the base commit before the fix. Payments and
+other irreversible paths need proof against the real provider's test mode,
+not mocks.
 
 ### Rollback
 
-Three parts, in this order:
-
-1. **Measure the blast radius first** with a read-only query and today's
-   dated result, so whoever runs the rollback sees the number before acting.
-2. **Ordered steps**, in one transaction where data is involved.
-3. **What is kept and what is lost**, including accepted collateral.
-
-Then state the invariant rollback must preserve. Example, generalized from an
-approved plan:
+When a code revert is not enough: measure the blast radius first, then give
+ordered steps, then say what is kept and lost, then the invariant rollback
+must preserve. A pure code change needs no section. Example, generalized from
+an approved plan:
 
 ```text
 Measure first: count the parent batches that contain generated records and
@@ -198,32 +227,36 @@ in-progress record inside a deleted batch is lost; that is acceptable for a
 rollback and is stated here.
 ```
 
-### Risks and misreadings
+### Risks and how not to misread results
 
-Name the risks, and also the signals that will look like good or bad news but
-are not. For example: "Sign-ups rise after the fix because the count was
-previously under-reported; do not read it as a campaign improvement."
+Name the risks, how you would detect each in production (metric, log, or
+alert), and the signals that will look like good or bad news but are not. For
+example: "Sign-ups rise after the fix because the count was previously
+under-reported; do not read it as a campaign improvement."
 
-### Release, effort, and authority
+### Delivery and authority
 
-A rough effort estimate (broken down when over a day), a stopping rule ("if X
-or Y turns out to be true, stop that work and return to the owner with smaller
-alternatives"), and which steps need separate explicit owner approval.
-Implementation approval is never merge or production approval.
+The branch and lineage (for a production hotfix, start from the exact commit
+currently deployed, not from `main`), the deploy order, any data or content
+release that ships separately from the code, any change-management record your
+organization requires, each step needing separate explicit approval, and a
+stopping rule for multi-day work. Plan approval is never merge or production
+approval.
 
-### Owner decisions required
+### Required updates
 
-Give each decision an ID and state the exact choice, the options with their
-consequences, the default if the owner does not answer, the seat that resumes,
-and your recommendation. The plan viewer renders this section as decision
-cards when each item ends with `Recommendation: ...`.
+The documentation and process obligations your team attaches to certain
+changes: the tracking ticket, runbooks and on-call docs, user-facing docs or
+release notes, API documentation, dashboards and alerts, and the team's agent
+instructions when the workflow itself changes. List only the ones this change
+triggers, so the reviewer can check them off.
 
 ### Review request
 
-What is new in this version, what is retained from a prior approval, and the
-known limits of your evidence. For later rounds, a disposition of each prior
-finding by ID. When earlier versions were withdrawn for real mistakes, a short
-"do not reintroduce" list keeps the implementer from repeating them.
+From v2 onward: what is new in this version, what is retained from a prior
+approval, a disposition of each prior finding by ID, and the limits of your
+evidence. If earlier versions were withdrawn for real mistakes, add a short
+"do not reintroduce" list.
 
 ## Anti-patterns
 

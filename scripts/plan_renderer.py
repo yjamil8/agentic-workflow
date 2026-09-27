@@ -342,7 +342,8 @@ def render_plan_html(md_text: str, source_label: str, sidebar_html: str | None =
         elif kv:
             # Too long for a one-line chip; keep it as a labeled note instead.
             lede_parts.append(f"<p><strong>{html.escape(kv.group(1))}:</strong> {render_inline(kv.group(2))}</p>")
-        elif text:
+        elif text or m is None:
+            # Lists, tables, code blocks, and notes above the first section stay visible.
             lede_parts.append(frag)
 
     meta_chips.append(("Source", source_label))

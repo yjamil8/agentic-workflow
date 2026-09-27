@@ -292,7 +292,7 @@ passed is not complete; it is unreviewed.
 Before marking a table complete, the closing seat, the reviewer granting the
 table's final required gate approval (code reviewer, QA, or deployment agent,
 whichever is last for that table's scope, never the coder or planner), runs
-[list-stale-worktrees.sh](../scripts/list-stale-worktrees.sh:1) for every
+[list-stale-worktrees.sh](../scripts/list-stale-worktrees.sh) for every
 worktree the table used and records in the completion artifact that each one
 is already removed or still needed and why, per the worktree cleanup rules in
 `AGENTS.md`'s Collaboration Rules. This confirms the coder's own per-round
@@ -326,8 +326,8 @@ updated in place.
 
 When citing the plan in `Active artifacts`, a handoff, or an approval record,
 link both the `.md` file and its local viewer URL at
-`http://127.0.0.1:8765/plan/<path-relative-to-implementation_plans>` (reserved
-port 8765; see the Rally skill). The viewer is a formatted read; the `.md` file
+`http://127.0.0.1:8765/plan/<path-relative-to-implementation_plans>` (the
+default port of `scripts/serve_implementation_plans.py`). The viewer is a formatted read; the `.md` file
 is the exact reviewed source. Quickly confirm the URL actually resolves before
 sending it to the owner; if the local server is not running, start it or say
 so instead of handing over a dead link.

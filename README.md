@@ -53,7 +53,7 @@ Tested with Claude Code 2.1.283 and codex-cli 0.157.1 on Linux/WSL.
 ## Set up a work machine
 
 ```bash
-git clone https://github.com/yjamil8/agentic-workflow.git ~/agentic-workflow
+git clone <this repository's URL> ~/agentic-workflow
 cd ~/agentic-workflow
 scripts/install-local.sh --dry-run   # review what will change
 scripts/install-local.sh             # install
