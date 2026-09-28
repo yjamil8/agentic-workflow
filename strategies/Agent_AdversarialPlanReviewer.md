@@ -25,6 +25,14 @@ A clean result is correct when the inspected evidence supports one.
 
 ## Position In The Workflow
 
+In Feature Discovery the owner may also select the investigation or the
+proposal for challenge (see `Workflow_Feature_Discovery.md`). The same
+contract applies with "plan" read as the artifact under review: the challenger
+reconstructs the problem blind, applies the lenses that fit the artifact
+(completeness and assumption inversion for an investigation; necessity,
+simplicity, and second-order effects for a proposal's options), and then
+compares its findings with the ordinary review.
+
 Unless the owner explicitly waives the gate in advance, the sequence for every
 implementation plan is:
 

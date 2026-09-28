@@ -76,8 +76,10 @@ install_file() {
 }
 
 echo "== Claude Code: commands =="
-install_file "$ROOT/claude_skills/rally/command.md" "$CLAUDE_COMMANDS/rally.md"
-install_file "$ROOT/claude_skills/adversarial-plan-review/command.md" "$CLAUDE_COMMANDS/adversarial-plan-review.md"
+for cmd in "$ROOT"/claude_skills/*/command.md; do
+  name="$(basename "$(dirname "$cmd")")"
+  install_file "$cmd" "$CLAUDE_COMMANDS/$name.md"
+done
 install_file "$ROOT/commands/review.md" "$CLAUDE_COMMANDS/review.md"
 
 echo "== Claude Code: agents =="

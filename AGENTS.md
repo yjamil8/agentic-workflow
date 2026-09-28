@@ -44,9 +44,15 @@ CLAUDE.md                              <- imports AGENTS.md (@AGENTS.md)
 strategies/
   Agent_Table_Collaboration_Rules.md   <- the Agent Table protocol contract
   Agent_AdversarialPlanReviewer.md     <- the plan_challenger judgment contract
+  Workflow_Feature_Discovery.md        <- feature: investigate, propose, plan, stories
+  Workflow_Story_Delivery.md           <- story: plan, implement, review, PR
 guides/
   implementation-planning-guide.md     <- how to write a strong plan
-  implementation-plan-template.md      <- copy this to start a plan
+  implementation-plan-template.md      <- feature plans and standalone plans
+  feature-investigation-template.md    <- Feature Discovery stage 1
+  feature-proposal-template.md         <- Feature Discovery stage 2
+  user-story-template.md               <- paste-ready story, private traceability
+  story-plan-template.md               <- Story Delivery plan
 agents/
   pr-review-specialist.md              <- Claude Code PR reviewer (GitHub MCP or gh)
 commands/
@@ -54,9 +60,11 @@ commands/
 claude_skills/
   rally/                               <- Rally, Claude Code transport
   adversarial-plan-review/             <- thin pointer to the Codex-canonical skill
+  feature-discovery/, story-delivery/  <- thin pointers to the Codex-canonical skills
 codex_skills/
   rally/                               <- Rally, Codex transport
   adversarial-plan-review/             <- canonical adversarial-plan-review skill
+  feature-discovery/, story-delivery/  <- canonical workflow skills
   pr-review/                           <- Codex PR reviewer (gh CLI)
 scripts/
   install-local.sh                     <- installs commands, skills, global instructions
@@ -80,6 +88,21 @@ Deliver the smallest reliable change that satisfies the owner's goal and preserv
 6. **Review necessity as well as correctness.** Reviewers must challenge unjustified scope and consider removing or simplifying the requirement behind a finding. Blocking findings need a concrete failure or violated requirement, affected users/invariants, and reproduction or traceable code/data evidence. A failure need not have occurred in production to matter. Style preferences and speculative hardening remain nonblocking; do not manufacture findings to fill a quota.
 7. **Keep verification proportional.** When independent review is requested, use one review per meaningful checkpoint, with focused re-review and affected tests after fixes. Retain exact reviewed source identities and run comprehensive integration tests at meaningful integration checkpoints. Do not invalidate unrelated evidence after bookkeeping-only changes, require separate agent reviews of approval-record commits, or create recursive approval chains. Recheck documentation/configuration changes that actually alter behavior or authority. Existing explicit owner checkpoints require owner resolution before being changed, not silent bypass.
 8. **Expose cost and stop scope creep.** State a rough effort expectation for substantial work. If scope or elapsed effort materially exceeds it, promptly explain the expansion, actual user-visible progress, and recommended cuts. Seek approval for material expansion or new authority, not routine in-scope engineering decisions. Continue unaffected authorized work unless paused. Do not add another audit, amendment, or automation layer merely to manage the overhead of earlier ones.
+
+## Work Modes
+
+Two workflows cover most multi-agent work. Both run on the Agent Table and
+Rally described below.
+
+- **Feature Discovery** (`/feature-discovery`, Codex `feature-discovery`):
+  deep investigation of every call site, then a proposal, a feature plan, and
+  user stories ready to paste into the tracker. No code. The owner chooses per
+  feature which stages get the adversarial review. See
+  [Workflow_Feature_Discovery.md](strategies/Workflow_Feature_Discovery.md).
+- **Story Delivery** (`/story-delivery`, Codex `story-delivery`): one story
+  from story plan through review, implementation, code review, and pull
+  request, one table per story. See
+  [Workflow_Story_Delivery.md](strategies/Workflow_Story_Delivery.md).
 
 ## Multi-Agent Collaboration Protocol
 

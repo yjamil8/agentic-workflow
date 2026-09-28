@@ -33,6 +33,11 @@ layout. `CLAUDE.md` imports it, so Claude Code and Codex read the same rules.
 - **Plan viewer** ([scripts/serve_implementation_plans.py](scripts/serve_implementation_plans.py)):
   renders a repo's `implementation_plans/` into a styled, linkable reading
   view at `http://127.0.0.1:8765/plans`. No build step.
+- **Two work modes** ([strategies/Workflow_Feature_Discovery.md](strategies/Workflow_Feature_Discovery.md),
+  [strategies/Workflow_Story_Delivery.md](strategies/Workflow_Story_Delivery.md)):
+  `/feature-discovery` investigates a feature and produces a proposal, a
+  feature plan, and paste-ready user stories; `/story-delivery` takes one
+  story through plan, implementation, review, and pull request.
 - **Engineering rules in AGENTS.md**: scope and planning discipline, feature
   flag wiring, test double fidelity, source-of-truth fixes, worktree hygiene,
   and similar rules drawn from real defects.
@@ -61,7 +66,8 @@ scripts/install-local.sh             # install
 
 The installer:
 
-- copies the `/rally`, `/adversarial-plan-review`, and `/review` commands and
+- copies the `/rally`, `/feature-discovery`, `/story-delivery`,
+  `/adversarial-plan-review`, and `/review` commands and
   the `pr-review-specialist` agent into `~/.claude/`, and the skills into
   `~/.codex/skills/` (real copies, never symlinks: Codex silently ignores a
   skill whose `SKILL.md` is a symlink)

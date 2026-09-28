@@ -253,6 +253,12 @@ def render_markdown_body(text: str) -> tuple[list[Section], list[str]]:
             i += 1
             continue
 
+        if re.match(r"^(?:-{3,}|\*{3,}|_{3,})$", stripped):
+            flush_para()
+            emit("<hr>")
+            i += 1
+            continue
+
         if stripped.startswith("```"):
             flush_para()
             code_lines = []
@@ -489,6 +495,7 @@ th, td { text-align: left; padding: 0.5rem 0.7rem; border-bottom: 1px solid var(
 th { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.04em;
   text-transform: uppercase; color: var(--muted); }
 td.num, th.num { font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums; text-align: right; }
+hr { border: none; border-top: 1px solid var(--line); margin: 2rem 0; }
 .note { padding: 0.8rem 1rem; background: var(--tint); border-radius: 8px; margin: 1rem 0; max-width: 68ch; }
 .decisions { display: grid; gap: 0.7rem; margin: 0.8rem 0; }
 .decision { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); gap: 0.6rem; align-items: start; }

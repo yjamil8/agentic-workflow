@@ -20,6 +20,11 @@ class PlanRendererTests(unittest.TestCase):
         html = self.render("# T\n\n| A | B |\n|---|---|\n| 1 | 2 |\n\n## Outcome\n\nx\n")
         self.assertIn("<table>", html)
 
+    def test_horizontal_rule_renders_as_rule_not_text(self):
+        html = self.render("# T\n\n## Size\n\nabout a day\n\n---\n\nDo not paste below this line.\n")
+        self.assertIn("<hr>", html)
+        self.assertNotIn("<p>---</p>", html)
+
     def test_milestone_headings_render_as_cards(self):
         html = self.render("# T\n\n## Milestones\n\n### Milestone 1: Journey works (done)\n\ny\n\n## Milestone B: Next\n\nz\n\n### M3 Short form\n\nw\n")
         self.assertEqual(html.count('class="milestone"'), 3)
