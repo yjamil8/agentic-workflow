@@ -7,13 +7,13 @@ happens later, one story at a time, through
 
 This workflow runs on the Agent Table protocol
 ([Agent_Table_Collaboration_Rules.md](Agent_Table_Collaboration_Rules.md)) and
-Rally transport. Those rules still govern turns, handoffs, immutable dated
+agent-table transport. Those rules still govern turns, handoffs, immutable dated
 reviews, approval receipts, and owner decisions; this document adds the
 stages, artifacts, and gates specific to feature discovery.
 
 ## Seats
 
-| Seat | Role name in Rally | Does |
+| Seat | Role name on the table | Does |
 |---|---|---|
 | Planner | `planner` | Investigates, writes the proposal, feature plan, and stories. |
 | Reviewer | `reviewer` | Reviews each stage artifact; never the author. |
@@ -51,7 +51,7 @@ exactly as implementation plans are.
 ## Setup: record the owner's policy first
 
 Before any investigation, the creating session asks the owner for, and records
-verbatim in a `## Owner policy` section of `TABLE.md` (outside the Rally
+verbatim in a `## Owner policy` section of `TABLE.md` (outside the agent-table
 managed block):
 
 1. **Goal and scope** of the feature, and anything explicitly excluded.

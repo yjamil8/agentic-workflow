@@ -1,6 +1,0 @@
-interface:
-  display_name: "Rally"
-  short_description: "Create or join a table and coordinate named agents"
-  default_prompt: "Use $rally to create or join our shared table in my assigned role and coordinate directly with the sessions I name."
-policy:
-  allow_implicit_invocation: true

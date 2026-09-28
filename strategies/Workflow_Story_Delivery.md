@@ -7,13 +7,13 @@ standalone story the owner provides.
 
 It runs on the Agent Table protocol
 ([Agent_Table_Collaboration_Rules.md](Agent_Table_Collaboration_Rules.md)) and
-Rally transport, which still govern turns, handoffs, reviews, receipts, and
+agent-table transport, which still govern turns, handoffs, reviews, receipts, and
 owner decisions. Use one table per story, so each table ends in one pull
 request.
 
 ## Seats
 
-| Seat | Role name in Rally | Does |
+| Seat | Role name on the table | Does |
 |---|---|---|
 | Implementer | `implementer` | Writes the story plan, then implements it. |
 | Reviewer | `reviewer` | Reviews the story plan and the code; never the author. |
@@ -36,7 +36,7 @@ For a standalone story with no feature, use
 ## Setup
 
 The creating session records in a `## Owner policy` section of `TABLE.md`
-(outside the Rally managed block):
+(outside the agent-table managed block):
 
 - the story file and, when the story came from Feature Discovery, the approved
   feature plan version and commit, the investigation commit, and the feature

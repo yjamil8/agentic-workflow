@@ -1,6 +1,6 @@
 ---
 name: adversarial-plan-review
-description: Run the required independent adversarial challenge after ordinary approval of an implementation plan and before implementation, unless the table records the owner's advance NO ADR or NO_ADR waiver. Use when the owner invokes Rally plus this skill with a table ID or when a plan reviewer hands the plan to plan_challenger. Tests whether the proposed product and technical design should exist in that form, exposes shared reviewer tunnel vision, and traces customer and system consequences. Not for ordinary plan review, code review, implementation, or self-review.
+description: Run the required independent adversarial challenge after ordinary approval of an implementation plan and before implementation, unless the table records the owner's advance NO ADR or NO_ADR waiver. Use when the owner invokes agent-table plus this skill with a table ID or when a plan reviewer hands the plan to plan_challenger. Tests whether the proposed product and technical design should exist in that form, exposes shared reviewer tunnel vision, and traces customer and system consequences. Not for ordinary plan review, code review, implementation, or self-review.
 ---
 
 # Adversarial Plan Review
@@ -16,16 +16,16 @@ decision, not the people who proposed it. A clear review may have zero findings.
 2. Read `<agentic-workflow-root>/strategies/Agent_AdversarialPlanReviewer.md` in full. It is
    the judgment contract and controls this review.
 3. Read `<agentic-workflow-root>/strategies/Agent_Table_Collaboration_Rules.md` in full.
-4. Read and follow the installed `rally` skill for table identity, claiming,
+4. Read and follow the installed `agent-table` skill for table identity, claiming,
    advancing, notification, replay, and pause mechanics. This skill does not
-   replace Rally transport.
+   replace agent-table transport.
 
 Announce that this skill is being used and that the blind-first pass delays
 reading the ordinary review's reasoning until after independent inspection.
 
 ## Join from the table ID
 
-The normal owner input is only the table ID while invoking Rally and this
+The normal owner input is only the table ID while invoking agent-table and this
 skill. Treat that as complete input. Search `TABLE.md` files under
 `agent_tables/` at the root of the work repo you are in for the exact ID, require one unique match, and join
 that table as `plan_challenger`. Resolve the current turn, assignment, exact
@@ -37,7 +37,7 @@ The owner commonly starts this session before the plan reviewer finishes. If
 another role owns the turn, join to register the seat, accept `standby`, and
 yield. Do not begin substantive inspection, read the ordinary review's
 reasoning, poll, or ask the owner to activate the session. The ordinary
-reviewer will advance the table and Rally will notify this session. Then
+reviewer will advance the table and agent-table will notify this session. Then
 re-read the table, claim the exact current turn, and proceed without another
 owner prompt.
 
@@ -129,7 +129,7 @@ whole-plan clearance with an unproven method deferred to "validate later".
 Repeat only affected proof when material behavior changes; reuse adequate
 existing evidence and do not create additional approval layers.
 
-Route through Rally:
+Route through agent-table:
 
 - `clear`: set the adversarial gate clear for the exact plan and hand to the
   coder when no other gate blocks implementation

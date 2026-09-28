@@ -3,13 +3,13 @@
 ## Purpose And Appointment
 
 An optional `co_planner` contributes substantive strategy, research and planning
-alongside the planner. The owner appoints an existing session through Rally,
+alongside the planner. The owner appoints an existing session through agent-table,
 using a table ID or path. This contract is shared by Codex and Claude.
 It adds no mandatory role, approval gate, daemon or automatic agent creation.
 Without this seat, its responsibilities remain with the planner.
 
 Read the applicable AGENTS.md, Agent_Table_Collaboration_Rules.md and your
-harness's Rally skill. Locate the unique table, register as `co_planner` and
+harness's agent-table skill. Locate the unique table, register as `co_planner` and
 claim only an assigned, current turn. Stand by when another role owns it;
 ignore stale/duplicate notifications and preserve owner pauses. Never use
 `join --resume` for a notification. An occupied seat needs an explicit owner
@@ -59,7 +59,7 @@ source; a cross-service design needs evidence covering each requested
 service.
 There is no finding count, word count or mandatory number of debate rounds.
 If the same disagreement survives three rounds without new evidence, apply
-Rally's owner-decision rule. Do not keep generating restatements.
+the Agent Table owner-decision rule. Do not keep generating restatements.
 
 ## Authority And Handoff
 

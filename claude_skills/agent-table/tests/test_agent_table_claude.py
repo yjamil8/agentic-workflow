@@ -13,16 +13,16 @@ from unittest.mock import patch
 import uuid
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "rally_claude.py"
-SPEC = importlib.util.spec_from_file_location("rally_claude", SCRIPT)
-rally = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(rally)
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "agent_table_claude.py"
+SPEC = importlib.util.spec_from_file_location("agent_table_claude", SCRIPT)
+agent_table = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(agent_table)
 A, B, C = (str(uuid.uuid4()) for _ in range(3))
 
 
-class RallyClaudeTests(unittest.TestCase):
+class AgentTableClaudeTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(prefix="rally-claude-test-")
+        self.temp = tempfile.TemporaryDirectory(prefix="agent-table-claude-test-")
         self.addCleanup(self.temp.cleanup)
         self.table = Path(self.temp.name) / "TABLE.md"
         self.call("create", "--name", "demo", "--goal", "Owner goal", "--scope", "Local only",
@@ -36,7 +36,7 @@ class RallyClaudeTests(unittest.TestCase):
         return json.loads(result.stdout)
 
     def state(self):
-        return rally.read_table(self.table)[1]
+        return agent_table.read_table(self.table)[1]
 
     def identity(self):
         state = self.state()
@@ -51,7 +51,7 @@ class RallyClaudeTests(unittest.TestCase):
                          "--summary", "Affected candidate ready", *options, thread=B, **kwargs)
 
     def notify_args(self, *options, thread=A):
-        return rally.parser().parse_args(["notify", "--table", str(self.table),
+        return agent_table.parser().parse_args(["notify", "--table", str(self.table),
                                           "--thread", thread, *options])
 
     def ack(self, result, status="queued", thread=A, error=None, **kwargs):
@@ -122,7 +122,7 @@ class RallyClaudeTests(unittest.TestCase):
         self.advance("--complete")
         self.assertEqual(self.join()["result"], "complete")
         self.call("pause", *self.identity(), "--reason", "invalid", success=False)
-        self.assertEqual(rally.notify(self.notify_args(), self.table)["result"], "not_sent")
+        self.assertEqual(agent_table.notify(self.notify_args(), self.table)["result"], "not_sent")
 
     def test_concurrent_registration_preserves_all_participants(self):
         with ThreadPoolExecutor(max_workers=2) as pool:
@@ -156,13 +156,13 @@ class RallyClaudeTests(unittest.TestCase):
         self.assertEqual((self.state()["turn"], self.state()["state"]), (4, "complete"))
 
     def test_notifications_are_once_only_and_use_two_phase_handoff(self):
-        first = rally.notify(self.notify_args(), self.table)
+        first = agent_table.notify(self.notify_args(), self.table)
         self.assertEqual(first["result"], "ready_to_send")
         self.assertEqual(first["target"], "implementer-big")
         self.assertIn(self.state()["table_id"], first["message"])
         self.assertEqual(self.state()["notification"]["status"], "sending")
         # A second concurrent notify before notify-sent must not re-send.
-        second = rally.notify(self.notify_args(), self.table)
+        second = agent_table.notify(self.notify_args(), self.table)
         self.assertEqual(second["result"], "uncertain; inspect before an explicit retry")
         self.assertEqual(self.ack(first)["result"], "recorded")
         self.assertEqual(self.state()["notification"]["status"], "queued")
@@ -175,29 +175,29 @@ class RallyClaudeTests(unittest.TestCase):
         self.join()
         self.call("pause", *self.identity(), "--reason", "Owner pause")
         self.call("resume", *self.identity(), "--reason", "Owner resumed")
-        result = rally.notify(self.notify_args(), self.table)
+        result = agent_table.notify(self.notify_args(), self.table)
         self.assertEqual(result["target"], "implementer-big")
         self.assertNotEqual(result["target"], B)
 
     def test_uncertain_notification_is_not_automatically_retried(self):
-        first = rally.notify(self.notify_args(), self.table)
+        first = agent_table.notify(self.notify_args(), self.table)
         self.assertEqual(self.ack(first, status="uncertain", error="SendMessage timed out")["result"], "recorded")
         self.assertEqual(self.state()["notification"]["status"], "uncertain")
-        self.assertEqual(rally.notify(self.notify_args(), self.table)["result"],
+        self.assertEqual(agent_table.notify(self.notify_args(), self.table)["result"],
                          "uncertain; inspect before an explicit retry")
-        retried = rally.notify(self.notify_args("--retry-uncertain"), self.table)
+        retried = agent_table.notify(self.notify_args("--retry-uncertain"), self.table)
         self.assertEqual(retried["result"], "ready_to_send")
         self.assertNotEqual(retried["attempt_id"], first["attempt_id"])
 
     def test_pause_during_notify_does_not_get_overwritten_by_late_ack(self):
-        first = rally.notify(self.notify_args(), self.table)
+        first = agent_table.notify(self.notify_args(), self.table)
         self.call("pause", *self.identity(), "--reason", "Owner stop during notification")
         self.assertEqual(self.ack(first)["result"], "stale; table advanced before acknowledgement")
         self.assertEqual(self.state()["state"], "paused")
         self.assertEqual(self.state()["notification"]["status"], "none")
 
     def test_receipt_during_notify_does_not_get_reverted_to_queued(self):
-        first = rally.notify(self.notify_args(), self.table)
+        first = agent_table.notify(self.notify_args(), self.table)
         self.join()
         self.assertEqual(self.ack(first)["result"], "stale; table advanced before acknowledgement")
         self.assertEqual(self.state()["notification"]["status"], "received")
@@ -216,13 +216,13 @@ class RallyClaudeTests(unittest.TestCase):
         self.assertEqual(self.table.read_bytes(), before)
 
     def test_own_identity_uses_environment_not_session_guessing(self):
-        args = rally.parser().parse_args(["join", "--table", str(self.table), "--role", "reviewer",
+        args = agent_table.parser().parse_args(["join", "--table", str(self.table), "--role", "reviewer",
                                           "--session", "reviewer-big"])
         with patch.dict(os.environ, {"CLAUDE_CODE_SESSION_ID": A}):
-            self.assertEqual(rally.own_thread(args), A)
+            self.assertEqual(agent_table.own_thread(args), A)
         with patch.dict(os.environ, {"CLAUDE_CODE_SESSION_ID": ""}):
             with self.assertRaises(ValueError):
-                rally.own_thread(args)
+                agent_table.own_thread(args)
 
 
 if __name__ == "__main__":

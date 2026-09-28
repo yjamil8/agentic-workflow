@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Small shared-file handoff helper for Claude Code sessions. No daemon; notifications are not authority.
 
-Forked from ../../codex_skills/rally/scripts/rally.py. The TABLE.md format is
+Forked from ../../codex_skills/agent-table/scripts/agent_table.py. The TABLE.md format is
 identical and interoperable with that Codex version; only two things differ:
 own-identity comes from CLAUDE_CODE_SESSION_ID instead of CODEX_THREAD_ID, and
 notification is a two-phase notify/notify-sent pair because the actual send is
@@ -19,8 +19,8 @@ import tempfile
 import uuid
 
 
-BEGIN = "<!-- rally:begin -->"
-END = "<!-- rally:end -->"
+BEGIN = "<!-- agent-table:begin -->"
+END = "<!-- agent-table:end -->"
 
 
 def own_thread(args):
@@ -40,17 +40,17 @@ def block(state):
 def read_table(path):
     content = path.read_text()
     if content.count(BEGIN) != 1 or content.count(END) != 1:
-        raise ValueError("Not a Rally table; preserve the existing format and follow its contract")
+        raise ValueError("Not an Agent Table; preserve the existing format and follow its contract")
     managed = content.split(BEGIN, 1)[1].split(END, 1)[0]
     state = json.loads(managed.split("```json\n", 1)[1].split("\n```", 1)[0])
-    if state["rally"] != 1:
-        raise ValueError("Unsupported Rally format")
+    if state["agent_table"] != 1:
+        raise ValueError("Unsupported Agent Table format")
     return content, state
 
 
 def write_table(path, content, state):
     before, after = content.split(BEGIN, 1)[0], content.split(END, 1)[1]
-    fd, temp = tempfile.mkstemp(prefix=".rally-", dir=path.parent)
+    fd, temp = tempfile.mkstemp(prefix=".agent-table-", dir=path.parent)
     try:
         with os.fdopen(fd, "w") as output:
             output.write(before + block(state) + after)
@@ -65,7 +65,7 @@ def write_table(path, content, state):
 @contextmanager
 def locked(path):
     # Stable per-user lock inode, outside the repository; never unlink live locks.
-    folder = Path(tempfile.gettempdir()) / f"rally-claude-locks-{os.getuid()}"
+    folder = Path(tempfile.gettempdir()) / f"agent-table-claude-locks-{os.getuid()}"
     folder.mkdir(mode=0o700, exist_ok=True)
     key = hashlib.sha256(str(path).encode()).hexdigest()
     with (folder / key).open("a") as handle:
@@ -103,14 +103,14 @@ def create(args, path):
     first = args.first_role or args.role
     if first not in participants:
         raise ValueError("First role must be a named participant")
-    state = dict(rally=1, table_id=str(uuid.uuid4()), name=args.name,
+    state = dict(agent_table=1, table_id=str(uuid.uuid4()), name=args.name,
                  goal=args.goal, scope=args.scope, workspace=str(Path.cwd()),
                  participants=participants, turn=1, current_role=first, state="ready",
                  assignment=args.assignment, claim=None, artifacts=[], last_result=None,
                  pause_reason=None, notification={"status": "pending"})
     path.parent.mkdir(parents=True, exist_ok=True)
-    write_table(path, f"# {args.name} - Rally table\n\n"
-                f"The managed block is authoritative; update it with Rally.\n\n{BEGIN}{END}\n", state)
+    write_table(path, f"# {args.name} - Agent Table\n\n"
+                f"The managed block is authoritative; update it with the agent-table helper.\n\n{BEGIN}{END}\n", state)
     return state
 
 
@@ -197,9 +197,9 @@ def notify(args, path):
         attempt_id = str(uuid.uuid4())
         state["notification"] = dict(status="sending", target=target, attempt_id=attempt_id)
         write_table(path, content, state)
-        message = (f"Rally handoff: table {path}; table_id {table_id}; turn {turn}; "
+        message = (f"Agent Table handoff: table {path}; table_id {table_id}; turn {turn}; "
                    f"role {state['current_role']}; invited session {seat['session']}. "
-                   f"Use /rally ({Path(__file__).resolve().parents[1] / 'rally.md'}) "
+                   f"Use /agent-table ({Path(__file__).resolve().parents[1] / 'agent-table.md'}) "
                    "to read the current table and join with these identifiers. "
                    "Ignore stale/claimed/paused/completed work and honor newer owner instructions. "
                    "No ACK or probe reply required.")

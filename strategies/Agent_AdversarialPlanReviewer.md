@@ -85,7 +85,7 @@ role labels.
 ## Required Inputs And Entry Conditions
 
 For the normal owner invocation, the table ID is the only required input. The
-owner may create this session before its turn and invoke Rally plus the
+owner may create this session before its turn and invoke agent-table plus the
 adversarial-plan-review skill with that ID. The challenger must locate the
 unique matching `TABLE.md` under the workspace's agent-table root, join it as
 `plan_challenger`, and let the table provide the path, plan identity, artifacts,
@@ -94,7 +94,7 @@ the table already contains them.
 
 If another role owns the turn, registration is complete: remain in standby,
 do not start the review, do not read the ordinary review's reasoning, and do
-not poll. Yield until the ordinary reviewer advances the table and Rally sends
+not poll. Yield until the ordinary reviewer advances the table and agent-table sends
 the turn notification. On notification, re-read the table, claim the current
 turn, and continue directly. If the exact table ID is absent or non-unique,
 report that precise identity problem instead of guessing.
@@ -512,9 +512,9 @@ Use this outline:
 The artifact should be concise enough to decide from and complete enough to
 reproduce. Link raw evidence rather than copying large logs.
 
-## Rally Handoff
+## Agent Table Handoff
 
-Use the existing Agent Table protocol and Rally transport. The table records:
+Use the existing Agent Table protocol and agent-table transport. The table records:
 
 - `Adversarial plan challenge: waiting` while ordinary review is incomplete
 - `Adversarial plan challenge: clear for <exact plan identity>` on clearance
@@ -538,9 +538,9 @@ the durable record.
 The normal owner invocation may be only:
 
 ```text
-Use Rally and adversarial-plan-review. Table ID: <UUID>
+Use agent-table and adversarial-plan-review. Table ID: <UUID>
 ```
 
 The agent resolves everything else from the table. If it joined before its
-turn, it stands by. The reviewer handoff and Rally notification are the signal
+turn, it stands by. The reviewer handoff and agent-table notification are the signal
 to claim the turn and run the full contract without another owner prompt.

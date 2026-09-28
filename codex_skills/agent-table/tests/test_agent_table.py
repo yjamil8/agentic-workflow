@@ -13,16 +13,16 @@ from unittest.mock import patch
 import uuid
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "rally.py"
-SPEC = importlib.util.spec_from_file_location("rally", SCRIPT)
-rally = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(rally)
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "agent_table.py"
+SPEC = importlib.util.spec_from_file_location("agent_table", SCRIPT)
+agent_table = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(agent_table)
 A, B, C = (str(uuid.uuid4()) for _ in range(3))
 
 
-class RallyTests(unittest.TestCase):
+class AgentTableTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(prefix="rally-test-")
+        self.temp = tempfile.TemporaryDirectory(prefix="agent-table-test-")
         self.addCleanup(self.temp.cleanup)
         self.table = Path(self.temp.name) / "TABLE.md"
         self.call("create", "--name", "demo", "--goal", "Owner goal", "--scope", "Local only",
@@ -36,7 +36,7 @@ class RallyTests(unittest.TestCase):
         return json.loads(result.stdout)
 
     def state(self):
-        return rally.read_table(self.table)[1]
+        return agent_table.read_table(self.table)[1]
 
     def identity(self):
         state = self.state()
@@ -51,7 +51,7 @@ class RallyTests(unittest.TestCase):
                          "--summary", "Affected candidate ready", *options, thread=B, **kwargs)
 
     def notify_args(self, *options):
-        return rally.parser().parse_args(["notify", "--table", str(self.table),
+        return agent_table.parser().parse_args(["notify", "--table", str(self.table),
                                           "--thread", A, *options])
 
     def test_create_cannot_overwrite_existing_table(self):
@@ -113,8 +113,8 @@ class RallyTests(unittest.TestCase):
         self.advance("--complete")
         self.assertEqual(self.join()["result"], "complete")
         self.call("pause", *self.identity(), "--reason", "invalid", success=False)
-        with patch.object(rally.subprocess, "run") as transport:
-            self.assertEqual(rally.notify(self.notify_args(), self.table)["result"], "not_sent")
+        with patch.object(agent_table.subprocess, "run") as transport:
+            self.assertEqual(agent_table.notify(self.notify_args(), self.table)["result"], "not_sent")
             transport.assert_not_called()
 
     def test_concurrent_registration_preserves_all_participants(self):
@@ -151,9 +151,9 @@ class RallyTests(unittest.TestCase):
     def test_notifications_are_once_only_and_use_argument_array(self):
         queue_id = str(uuid.uuid4())
         accepted = subprocess.CompletedProcess([], 0, f"Queued message {queue_id} for thread {B}.\n", "")
-        with patch.object(rally.subprocess, "run", return_value=accepted) as transport:
+        with patch.object(agent_table.subprocess, "run", return_value=accepted) as transport:
             with ThreadPoolExecutor(max_workers=2) as pool:
-                jobs = [pool.submit(rally.notify, self.notify_args(), self.table) for _ in range(2)]
+                jobs = [pool.submit(agent_table.notify, self.notify_args(), self.table) for _ in range(2)]
                 for job in jobs:
                     job.result()
             transport.assert_called_once()
@@ -163,7 +163,7 @@ class RallyTests(unittest.TestCase):
             self.assertNotIn("shell", kwargs)
             self.assertEqual(self.state()["notification"]["queue_id"], queue_id)
             self.assertEqual(self.state()["notification"]["status"], "queued")
-            rally.notify(self.notify_args("--retry-uncertain"), self.table)
+            agent_table.notify(self.notify_args("--retry-uncertain"), self.table)
             transport.assert_called_once()
         self.join()
         self.assertEqual(self.state()["notification"]["status"], "received")
@@ -172,16 +172,16 @@ class RallyTests(unittest.TestCase):
         self.join()
         self.call("pause", *self.identity(), "--reason", "Owner pause")
         self.call("resume", *self.identity(), "--reason", "Owner resumed")
-        with patch.object(rally.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")) as transport:
-            rally.notify(self.notify_args(), self.table)
+        with patch.object(agent_table.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")) as transport:
+            agent_table.notify(self.notify_args(), self.table)
             self.assertEqual(transport.call_args.args[0][3], B)
 
     def test_uncertain_transport_is_not_automatically_retried(self):
-        with patch.object(rally.subprocess, "run", side_effect=subprocess.TimeoutExpired("codex", 25)) as transport:
-            self.assertEqual(rally.notify(self.notify_args(), self.table)["status"], "uncertain")
-            rally.notify(self.notify_args(), self.table)
+        with patch.object(agent_table.subprocess, "run", side_effect=subprocess.TimeoutExpired("codex", 25)) as transport:
+            self.assertEqual(agent_table.notify(self.notify_args(), self.table)["status"], "uncertain")
+            agent_table.notify(self.notify_args(), self.table)
             transport.assert_called_once()
-            rally.notify(self.notify_args("--retry-uncertain"), self.table)
+            agent_table.notify(self.notify_args("--retry-uncertain"), self.table)
             self.assertEqual(transport.call_count, 2)
 
     def test_pause_during_queue_does_not_get_overwritten_by_acceptance(self):
@@ -191,8 +191,8 @@ class RallyTests(unittest.TestCase):
         real_run = subprocess.run
         def route(command, **kwargs):
             return delayed_acceptance() if command[0] == "codex" else real_run(command, **kwargs)
-        with patch.object(rally.subprocess, "run", side_effect=route):
-            rally.notify(self.notify_args(), self.table)
+        with patch.object(agent_table.subprocess, "run", side_effect=route):
+            agent_table.notify(self.notify_args(), self.table)
         self.assertEqual(self.state()["state"], "paused")
         self.assertEqual(self.state()["notification"]["status"], "none")
 
@@ -203,8 +203,8 @@ class RallyTests(unittest.TestCase):
                 return real_run(command, **kwargs)
             self.join()
             return subprocess.CompletedProcess([], 0, "", "")
-        with patch.object(rally.subprocess, "run", side_effect=route):
-            rally.notify(self.notify_args(), self.table)
+        with patch.object(agent_table.subprocess, "run", side_effect=route):
+            agent_table.notify(self.notify_args(), self.table)
         self.assertEqual(self.state()["notification"]["status"], "received")
         self.assertEqual(self.state()["state"], "working")
 
@@ -221,12 +221,12 @@ class RallyTests(unittest.TestCase):
         self.assertEqual(self.table.read_bytes(), before)
 
     def test_own_identity_uses_environment_not_session_guessing(self):
-        args = rally.parser().parse_args(["join", "--table", str(self.table), "--role", "reviewer"])
+        args = agent_table.parser().parse_args(["join", "--table", str(self.table), "--role", "reviewer"])
         with patch.dict(os.environ, {"CODEX_THREAD_ID": A}):
-            self.assertEqual(rally.own_thread(args), A)
+            self.assertEqual(agent_table.own_thread(args), A)
         with patch.dict(os.environ, {"CODEX_THREAD_ID": ""}):
             with self.assertRaises(ValueError):
-                rally.own_thread(args)
+                agent_table.own_thread(args)
 
 
 if __name__ == "__main__":

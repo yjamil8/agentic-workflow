@@ -1,9 +1,9 @@
 ---
-name: rally
-description: Create, join, resume, and hand off a shared agent table between existing Codex sessions with distinct roles. Use when the user invokes Rally or JoinAgenticTable, asks agents in separate chats to collaborate on one goal, or supplies a table, assigned role, and counterpart session name. Supports direct implementer/reviewer loops without the owner relaying messages. Not for ordinary solo work, creating new agents, or authorizing deployment.
+name: agent-table
+description: Create, join, resume, and hand off a shared agent table between existing Codex sessions with distinct roles. Use when the user invokes agent-table or JoinAgenticTable, asks agents in separate chats to collaborate on one goal, or supplies a table, assigned role, and counterpart session name. Supports direct implementer/reviewer loops without the owner relaying messages. Not for ordinary solo work, creating new agents, or authorizing deployment.
 ---
 
-# Rally
+# Agent Table
 
 One goal, named roles, durable handoffs. Coordinate existing chats; do not create
 agents, a daemon, a watcher, a new approval process, or a second source of truth.
@@ -80,7 +80,7 @@ agents, a daemon, a watcher, a new approval process, or a second source of truth
    notification fails; do not wait for the owner to ask.
    After creation, claim the first turn with `join` if it is yours; otherwise
    notify the assigned first role and remain registered in standby.
-3. Use the helper below for new Rally tables. Your own UUID comes from
+3. Use the helper below for new Agent Tables. Your own UUID comes from
    `CODEX_THREAD_ID`; if unavailable, use a verified UUID with `--thread`.
    Never guess from log timestamps or the most recently active session.
    The owner supplies a counterpart's exact session name or UUID. Do not rename,
@@ -97,7 +97,7 @@ agents, a daemon, a watcher, a new approval process, or a second source of truth
 
 ## Pre-register an adversarial reviewer
 
-When the owner invokes Rally and `adversarial-plan-review` in a newly created
+When the owner invokes agent-table and `adversarial-plan-review` in a newly created
 session with only a table ID, treat that ID as complete entry information:
 
 1. Locate the unique `TABLE.md` containing the exact ID under the workspace's
@@ -120,22 +120,22 @@ never guess from recent tables.
 
 ## Helper: new tables
 
-Run `python3 <skill-dir>/scripts/rally.py --help`. Python 3 on Linux/WSL and
+Run `python3 <skill-dir>/scripts/agent_table.py --help`. Python 3 on Linux/WSL and
 native `codex queue --thread ... --message ...` are required for this helper.
 Resolve `<skill-dir>` to the directory containing this skill. All examples use
 placeholder values; use the real owner-provided scope and session names.
 
 ```bash
 # Called by the reviewer; the existing implementer receives the first task.
-python3 <skill-dir>/scripts/rally.py create --table /shared/agent_tables/example/TABLE.md --name example --goal 'The owner goal' --scope 'Authorized work and explicit stops' --role reviewer --peer implementer=implementer-big --first-role implementer --assignment 'Inspect the affected code and propose the smallest sufficient plan.'
-python3 <skill-dir>/scripts/rally.py notify --table /shared/agent_tables/example/TABLE.md
+python3 <skill-dir>/scripts/agent_table.py create --table /shared/agent_tables/example/TABLE.md --name example --goal 'The owner goal' --scope 'Authorized work and explicit stops' --role reviewer --peer implementer=implementer-big --first-role implementer --assignment 'Inspect the affected code and propose the smallest sufficient plan.'
+python3 <skill-dir>/scripts/agent_table.py notify --table /shared/agent_tables/example/TABLE.md
 
 # Recipient: take the table ID and turn from the notification, not an old chat.
-python3 <skill-dir>/scripts/rally.py join --table /shared/agent_tables/example/TABLE.md --role implementer --session implementer-big --table-id UUID --turn 1
+python3 <skill-dir>/scripts/agent_table.py join --table /shared/agent_tables/example/TABLE.md --role implementer --session implementer-big --table-id UUID --turn 1
 
 # Write the real artifact first. Then hand off and ring the doorbell once.
-python3 <skill-dir>/scripts/rally.py advance --table /shared/agent_tables/example/TABLE.md --table-id UUID --role implementer --turn 1 --to reviewer --assignment 'Review the linked candidate.' --summary 'Ready for independent review.' --artifact /shared/path/to/candidate.md
-python3 <skill-dir>/scripts/rally.py notify --table /shared/agent_tables/example/TABLE.md
+python3 <skill-dir>/scripts/agent_table.py advance --table /shared/agent_tables/example/TABLE.md --table-id UUID --role implementer --turn 1 --to reviewer --assignment 'Review the linked candidate.' --summary 'Ready for independent review.' --artifact /shared/path/to/candidate.md
+python3 <skill-dir>/scripts/agent_table.py notify --table /shared/agent_tables/example/TABLE.md
 ```
 
 The helper atomically updates one managed block in `TABLE.md`, preserving text
@@ -171,7 +171,7 @@ withdrawn, stop before another document, source, or table-state mutation.
 2. If a direct owner instruction clearly resolves the conflict, record that
    choice once and invalidate the stale turn. Do not keep applying queued
    reversals after the governing choice is known.
-3. If authority remains ambiguous, the current seat pauses Rally and gives the
+3. If authority remains ambiguous, the current seat pauses the table and gives the
    owner one concise statement of the conflicting choices, current file hashes,
    and side effects already performed. Do not alternate files again, create
    competing review artifacts, or send reciprocal correction handoffs while
@@ -284,9 +284,9 @@ withdrawn, stop before another document, source, or table-state mutation.
   decision to the owner; do not invent additional scope to keep agents busy.
 - Keep the owner updated on outcomes and material scope increases. Direct
   continuation does not mean silent work or unlimited task expansion.
-- Every queued Rally message, including direct follow-ups, review requests and
+- Every queued agent-table message, including direct follow-ups, review requests and
   pause notices, must start with
-  `[Rally sent_at=<UTC ISO-8601 timestamp ending Z> notification_id=<UUID>]`.
+  `[Agent Table sent_at=<UTC ISO-8601 timestamp ending Z> notification_id=<UUID>]`.
   Generate these at send time, not from a session log or the date of an artifact.
   The helper adds both automatically and persists them before queueing. For a
   direct `codex queue` message, generate and include them yourself and retain
@@ -315,9 +315,9 @@ not the name. Two consequences:
 Recovery, run by the seat that is **not** holding the turn:
 
 ```bash
-python3 <skill-dir>/scripts/rally.py pause --table ... --table-id ... --turn N \
+python3 <skill-dir>/scripts/agent_table.py pause --table ... --table-id ... --turn N \
   --reason 'Seat restarted; clearing the stale claim from the prior thread id.'
-python3 <skill-dir>/scripts/rally.py resume --table ... --table-id ... --turn N+1 \
+python3 <skill-dir>/scripts/agent_table.py resume --table ... --table-id ... --turn N+1 \
   --reason '...'
 ```
 
@@ -359,16 +359,16 @@ shares the completed goal or replaces it, not whether it touches the same files.
 ## Tables with Claude Code seats
 
 A Claude Code session can hold a seat at the same table; it runs its own
-helper (`rally_claude.py`). Notifications do not cross harnesses: `codex queue`
+helper (`agent_table_claude.py`). Notifications do not cross harnesses: `codex queue`
 reaches only Codex sessions. When you hand the turn to a Claude seat, complete
 the handoff as usual; `notify` will record the attempt as `uncertain` because
 the queue cannot reach that session. Then tell the owner which Claude session
 to prompt to check the table. Do not retry the notification.
 
-## Existing non-Rally tables
+## Existing tables without a managed block
 
 Keep their canonical file, turn, artifacts, and history. Do not run `create`
-over them or introduce a parallel Rally state file. Follow their current
+over them or introduce a parallel table state file. Follow their current
 format; the role-specific rules are the same Agent_Table_Collaboration_Rules.md
 already required at entry above, not a separate contract for this case.
 Update only the current assignment/state and session mappings needed for the

@@ -1,11 +1,11 @@
-# Rally (Claude Code)
+# Agent Table (Claude Code)
 
 One goal, named roles, durable handoffs. Coordinate existing Claude Code
 sessions; do not spawn new agents, a daemon, a watcher, a new approval
 process, or a second source of truth.
 
-This is a fork of the Codex `$rally` skill
-([../../codex_skills/rally/SKILL.md](../../codex_skills/rally/SKILL.md)), not
+This is a fork of the Codex `$agent-table` skill
+([../../codex_skills/agent-table/SKILL.md](../../codex_skills/agent-table/SKILL.md)), not
 an edit of it. Nothing here changes that skill or its script. The `TABLE.md`
 format is byte-identical and interoperable: a Codex session and a Claude Code
 session can hold seats at the exact same table, each running its own script.
@@ -15,15 +15,15 @@ Only two things differ, both forced by the transport:
   CLI in every session's environment) instead of `CODEX_THREAD_ID`.
 - **Notification is two-phase**, `notify` then `notify-sent`, because the
   actual send is the `SendMessage` tool, which this plain Python script cannot
-  call itself. `rally.py`'s `notify` shells out to `codex queue` directly;
-  `rally_claude.py`'s `notify` only reserves the handoff and hands you back
+  call itself. `agent_table.py`'s `notify` shells out to `codex queue` directly;
+  `agent_table_claude.py`'s `notify` only reserves the handoff and hands you back
   the exact `{target, message}` to send yourself.
 - **Routing always uses the session name**, never the bound `thread_id`.
   Codex's `codex queue --thread <UUID>` can route by the verified thread UUID
-  once a seat is bound, so `rally.py` prefers `thread_id` over `session`.
+  once a seat is bound, so `agent_table.py` prefers `thread_id` over `session`.
   Claude Code's `SendMessage` only routes by the display name shown in
   `ListAgents` (e.g. `agent-0b`): the raw `CLAUDE_CODE_SESSION_ID` is not a
-  valid `SendMessage` address. So `rally_claude.py` always targets `session`,
+  valid `SendMessage` address. So `agent_table_claude.py` always targets `session`,
   and `--session` is **required** on `create`/`join` here (it is optional in
   the Codex version) so a seat is never left with no routable address.
 
@@ -31,7 +31,7 @@ Only two things differ, both forced by the transport:
 
 Claude Code responses, including Opus-backed sessions, tend toward long
 recaps, restated plans, and narrated deliberation that nothing in this skill
-or the shared contract asks for. Keep every chat response in a Rally turn
+or the shared contract asks for. Keep every chat response in a table turn
 short: what changed and what happens next, nothing else. Do not restate the
 assignment, the table history, or a plan already visible in a linked
 artifact. Do not narrate reasoning, alternatives considered and discarded, or
@@ -131,21 +131,21 @@ during the turn, not only the final handoff notification.
 
 ## Helper: new tables
 
-Run `python3 <skill-dir>/scripts/rally_claude.py --help`. Python 3 and the
+Run `python3 <skill-dir>/scripts/agent_table_claude.py --help`. Python 3 and the
 native `ListAgents`/`SendMessage` tools are required; no external CLI is
 called. Resolve `<skill-dir>` to the directory containing this doc
-(`claude_skills/rally`). All examples use placeholder values; use
+(`claude_skills/agent-table`). All examples use placeholder values; use
 the real owner-provided scope and session names.
 
 ```bash
 # Called by the reviewer; the existing implementer receives the first task.
-python3 <skill-dir>/scripts/rally_claude.py create --table /shared/agent_tables/example/TABLE.md \
+python3 <skill-dir>/scripts/agent_table_claude.py create --table /shared/agent_tables/example/TABLE.md \
   --name example --goal 'The owner goal' --scope 'Authorized work and explicit stops' \
   --role reviewer --session reviewer-session-name --peer implementer=implementer-session-name \
   --first-role implementer --assignment 'Inspect the affected code and propose the smallest sufficient plan.'
 
 # Phase 1: reserve the handoff. Never sends anything by itself.
-python3 <skill-dir>/scripts/rally_claude.py notify --table /shared/agent_tables/example/TABLE.md
+python3 <skill-dir>/scripts/agent_table_claude.py notify --table /shared/agent_tables/example/TABLE.md
 # -> {"result": "ready_to_send", "target": "implementer-session-name", "message": "...",
 #     "attempt_id": "...", "table_id": "UUID", "turn": 1}
 
@@ -153,20 +153,20 @@ python3 <skill-dir>/scripts/rally_claude.py notify --table /shared/agent_tables/
 #   {"to": "implementer-session-name", "message": "<the printed message>"}
 
 # Phase 2: record what SendMessage actually did. Do this immediately after, always.
-python3 <skill-dir>/scripts/rally_claude.py notify-sent --table /shared/agent_tables/example/TABLE.md \
+python3 <skill-dir>/scripts/agent_table_claude.py notify-sent --table /shared/agent_tables/example/TABLE.md \
   --table-id UUID --turn 1 --attempt-id ATTEMPT_ID --status queued
 # If SendMessage clearly failed instead: --status uncertain --error 'what happened'
 
 # Recipient: take the table ID and turn from the SendMessage text, not an old chat.
-python3 <skill-dir>/scripts/rally_claude.py join --table /shared/agent_tables/example/TABLE.md \
+python3 <skill-dir>/scripts/agent_table_claude.py join --table /shared/agent_tables/example/TABLE.md \
   --role implementer --session implementer-session-name --table-id UUID --turn 1
 
 # Write the real artifact first. Then hand off and ring the doorbell once.
-python3 <skill-dir>/scripts/rally_claude.py advance --table /shared/agent_tables/example/TABLE.md \
+python3 <skill-dir>/scripts/agent_table_claude.py advance --table /shared/agent_tables/example/TABLE.md \
   --table-id UUID --role implementer --turn 1 --to reviewer \
   --assignment 'Review the linked candidate.' --summary 'Ready for independent review.' \
   --artifact /shared/path/to/candidate.md
-python3 <skill-dir>/scripts/rally_claude.py notify --table /shared/agent_tables/example/TABLE.md
+python3 <skill-dir>/scripts/agent_table_claude.py notify --table /shared/agent_tables/example/TABLE.md
 # -> ready_to_send with a new target/message/attempt_id; SendMessage, then notify-sent again.
 ```
 
@@ -219,7 +219,7 @@ mutation.
 2. If a direct owner instruction clearly resolves the conflict, record that
    choice once and invalidate the stale turn. Do not keep applying queued
    reversals after the governing choice is known.
-3. If authority remains ambiguous, the current seat pauses Rally and gives
+3. If authority remains ambiguous, the current seat pauses the table and gives
    the owner one concise statement of the conflicting choices, current file
    hashes, and side effects already performed. Do not alternate files
    again, create competing review artifacts, or send reciprocal correction
@@ -368,8 +368,8 @@ binds claims to the session id, not the name. Two consequences:
 Recovery, run by the seat that is **not** holding the turn:
 
 ```bash
-python3 <skill-dir>/scripts/rally_claude.py pause --table ... --table-id ... --turn N   --reason 'Seat restarted; clearing the stale claim from the prior session id.'
-python3 <skill-dir>/scripts/rally_claude.py resume --table ... --table-id ... --turn N+1   --reason '...'
+python3 <skill-dir>/scripts/agent_table_claude.py pause --table ... --table-id ... --turn N   --reason 'Seat restarted; clearing the stale claim from the prior session id.'
+python3 <skill-dir>/scripts/agent_table_claude.py resume --table ... --table-id ... --turn N+1   --reason '...'
 ```
 
 `pause` and `resume` each advance the turn, so the reissued turn is `N+2`. Read
@@ -407,10 +407,10 @@ If the follow-up needs its own plan, review gate and several turns, it is a new
 workstream and gets a new table with a distinct goal. The test is whether it
 shares the completed goal or replaces it, not whether it touches the same files.
 
-## Existing non-Rally tables
+## Existing tables without a managed block
 
 Keep their canonical file, turn, artifacts, and history. Do not run
-`create` over them or introduce a parallel Rally state file. Follow their
+`create` over them or introduce a parallel table state file. Follow their
 current format; the role-specific rules are the same Agent_Table_Collaboration_Rules.md
 already required at entry above, not a separate contract for this case.
 Update only the current assignment/state and
@@ -426,14 +426,14 @@ activation when the owner has authorized direct continuation. A conflicting
 unresolved contract needs a narrow correction, not a silent workflow
 migration.
 
-## Interoperating with the Codex `$rally` table
+## Interoperating with the Codex `$agent-table` table
 
 The `TABLE.md` JSON schema has nothing Codex-specific in it: `thread_id` and
 `session` are opaque strings either tool can read and write. A workstream
 can legitimately mix seats: a Codex session as planner, a Claude Code session
 as independent reviewer, on the exact same table. When you join a table
-created by `$rally`, everything in this doc still applies; you simply run
-`rally_claude.py` instead of `rally.py`, and any Codex participant already
+created by `$agent-table`, everything in this doc still applies; you simply run
+`agent_table_claude.py` instead of `agent_table.py`, and any Codex participant already
 seated keeps using its own script unchanged.
 
 Notifications do not cross harnesses. `SendMessage` reaches only Claude Code

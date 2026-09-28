@@ -11,7 +11,7 @@ Announce that this skill is in use, then:
    - `<agentic-workflow-root>/strategies/Workflow_Story_Delivery.md` (this workflow's contract; it controls the loop and gates)
    - `<agentic-workflow-root>/strategies/Agent_Table_Collaboration_Rules.md`
    - `<agentic-workflow-root>/strategies/Agent_AdversarialPlanReviewer.md` if you hold the `plan_challenger` seat
-2. Use the installed `rally` skill for table creation, joining, turns, handoffs, and notification. Use one table per story.
+2. Use the installed `agent-table` skill for table creation, joining, turns, handoffs, and notification. Use one table per story.
 3. Make sure the work repository has been prepared (`<agentic-workflow-root>/scripts/init-work-repo.sh <work-repo>`).
 4. On create, record the story, its feature plan and investigation commits when it came from Feature Discovery, and the challenge policy (inherited from the feature table unless the owner states otherwise; ask for a standalone story). Never infer a `NO ADR` waiver.
 5. Write the story plan from `<agentic-workflow-root>/guides/story-plan-template.md`, including the inventory recheck and any departures from the feature design.

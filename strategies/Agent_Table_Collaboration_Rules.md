@@ -11,7 +11,7 @@ The protocol is tool-agnostic. Codex and Claude Code sessions hold seats at the
 same table, reading and writing the identical `TABLE.md` format, each running its
 own helper. This document is the shared contract; anything specific to one
 tool's identity source, notification transport or helper commands belongs in
-that tool's own rally skill, not here.
+that tool's own agent-table skill, not here.
 
 The direct-handoff workflow is deliberately simple:
 
@@ -31,8 +31,8 @@ There is no autonomous orchestrator, polling loop, background daemon, or need to
 share session history. Each tool supplies its own notification channel and its
 own helper for create, join/resume and handoff:
 
-- Codex: [`$rally`](../codex_skills/rally/SKILL.md)
-- Claude Code: [`/rally`](../claude_skills/rally/rally.md)
+- Codex: [`$agent-table`](../codex_skills/agent-table/SKILL.md)
+- Claude Code: [`/agent-table`](../claude_skills/agent-table/agent-table.md)
 
 Existing tables retain their canonical files and history; adopting direct
 continuation does not require a format migration or create new authority to
@@ -199,8 +199,8 @@ of plans, reviews, test logs, or agent conversations.
 
 Record role-to-session mappings, authorized scope, explicit owner pauses, and
 notification/claim status alongside the turn. Prefer a session UUID once the
-participant has joined; until then use the owner's exact session name. New Rally
-tables keep this state in one helper-managed block in `TABLE.md`. The legacy
+participant has joined; until then use the owner's exact session name. New Agent
+Tables keep this state in one helper-managed block in `TABLE.md`. The legacy
 Markdown example below remains supported; do not create a competing state file.
 
 A table should contain:
@@ -505,7 +505,7 @@ belong in the table. Record that the notification was queued, not that it was
 processed. Do not resend accepted notifications just because there is no reply.
 Recipients claim the current turn before working; ignore stale or duplicate
 notifications without an ACK loop. A newer owner pause always wins over an old
-queued approval. New Rally tables enforce these state checks through the helper;
+queued approval. New Agent Tables enforce these state checks through the helper;
 legacy tables must record equivalent claim and notification state in their
 existing format.
 
@@ -599,7 +599,7 @@ not another approval seat. The planner remains accountable for integrating
 its evidence and resolving recommendations in the canonical plan. When absent,
 the duties remain with the planner. Do not add a mandatory co-planner checkpoint.
 
-Use normal Rally registration and turn ownership. Joining while another seat
+Use normal agent-table registration and turn ownership. Joining while another seat
 owns the turn means standby; it does not authorize concurrent edits. An invited
 co-planner receives a bounded planning question, linked inputs, and a return
 seat. It returns substantive evidence and a recommendation, not an approval.
@@ -661,7 +661,7 @@ It must be a separate session from the planner, any material co-planner/co-autho
 The owner may start that session before its turn with only the table ID. It
 locates the unique table, joins as `plan_challenger`, and stands by when another
 role owns the turn. Standby means no substantive review, no early reading of
-the ordinary review's reasoning, and no polling. The reviewer handoff and Rally
+the ordinary review's reasoning, and no polling. The reviewer handoff and agent-table
 notification cause it to re-read the table, claim the current turn, and begin.
 
 The challenger starts blind to the ordinary review's reasoning. It first
@@ -1131,7 +1131,7 @@ and cannot be inherited solely from the table artifact.
 Every agent joining a table must perform this entry sequence:
 
 1. read the repository's applicable `AGENTS.md` files
-2. use `$rally` when available and consult this strategy for applicable role rules
+2. use `$agent-table` when available and consult this strategy for applicable role rules
 3. read the entire `TABLE.md`
 4. confirm its role/session mapping; register and yield if another seat owns the turn
 5. claim the current turn, checking table identity and rejecting stale/duplicate notifications
@@ -1145,10 +1145,10 @@ lacks history.
 
 ## Owner Prompts
 
-### Create And Join With Rally
+### Create And Join With The agent-table Skill
 
 ```text
-Use $rally to create table <name> and join as reviewer. The implementer is the
+Use $agent-table to create table <name> and join as reviewer. The implementer is the
 existing session <exact session name>. Our goal is <goal>; authorized scope is
 <scope>. Coordinate directly. Wait for me only on <explicit stops, if any>.
 ```
@@ -1178,7 +1178,7 @@ if the table assigns it to you.
 ### Add An Optional Co-Planner
 
 ```text
-Use Rally to join table <table ID or absolute TABLE.md path> as co_planner.
+Use agent-table to join table <table ID or absolute TABLE.md path> as co_planner.
 Follow Agent_CoPlanner.md. Register and stand by until assigned a turn.
 ```
 

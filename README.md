@@ -13,7 +13,7 @@ layout. `CLAUDE.md` imports it, so Claude Code and Codex read the same rules.
   lets separate agent sessions (planner, reviewer, coder, QA) hand off work
   through a shared `TABLE.md` and linked artifacts, without you copying
   messages between chats.
-- **Rally** ([claude_skills/rally](claude_skills/rally), [codex_skills/rally](codex_skills/rally)):
+- **Agent Table skill** ([claude_skills/agent-table](claude_skills/agent-table), [codex_skills/agent-table](codex_skills/agent-table)):
   the transport for that protocol. Create, join, advance, pause, and resume a
   table. The `TABLE.md` format is identical for both tools, so Codex and
   Claude Code sessions can share a table, but handoff notifications do not
@@ -49,8 +49,8 @@ layout. `CLAUDE.md` imports it, so Claude Code and Codex read the same rules.
 Tested with Claude Code 2.1.283 and codex-cli 0.157.1 on Linux/WSL.
 
 - `bash`, `git`, and `python3` (standard library only).
-- Claude Code Rally needs the `ListAgents` and `SendMessage` tools
-  (cross-session messaging). Codex Rally needs the `codex queue` command.
+- The Claude Code `agent-table` skill needs the `ListAgents` and `SendMessage` tools
+  (cross-session messaging). The Codex version needs the `codex queue` command.
 - PR review needs `gh` authenticated to your GitHub host. For GitHub
   Enterprise: `gh auth login --hostname <your-ghe-host>`. The Claude reviewer
   also uses a GitHub MCP server when one is configured, and falls back to
@@ -68,7 +68,7 @@ scripts/install-local.sh             # install
 
 The installer:
 
-- copies the `/rally`, `/feature-discovery`, `/story-delivery`,
+- copies the `/agent-table`, `/feature-discovery`, `/story-delivery`,
   `/adversarial-plan-review`, and `/review` commands and
   the `pr-review-specialist` agent into `~/.claude/`, and the skills into
   `~/.codex/skills/` (real copies, never symlinks: Codex silently ignores a
@@ -111,8 +111,8 @@ python3 ~/agentic-workflow/scripts/serve_implementation_plans.py
 
 1. **Global rules.** In a new Claude Code session in any repo, ask "What does
    your AGENTS.md say about em dashes?" Then ask a new Codex session the same.
-2. **Rally across sessions.** Open two Claude Code sessions in the same work
-   repo. In the first, run `/rally create a table named smoke-test and join as
+2. **Agent Table across sessions.** Open two Claude Code sessions in the same work
+   repo. In the first, run `/agent-table create a table named smoke-test and join as
    reviewer; the implementer is <second session name>` (use `ListAgents` to
    get the name). Confirm the second session receives the handoff and can
    join. Delete `agent_tables/smoke-test` afterward.
@@ -124,8 +124,9 @@ python3 ~/agentic-workflow/scripts/serve_implementation_plans.py
 ## Maintaining this repo
 
 This repo is a seed: edit here, re-run the installer, and let it diverge per
-machine as needed. Rally has automated tests:
+machine as needed. The agent-table helpers have automated tests:
 
 ```bash
-python3 -m unittest claude_skills.rally.tests.test_rally_claude codex_skills.rally.tests.test_rally
+python3 -m unittest discover -s claude_skills/agent-table/tests -p 'test_*.py'
+python3 -m unittest discover -s codex_skills/agent-table/tests -p 'test_*.py'
 ```

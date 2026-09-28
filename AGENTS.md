@@ -4,7 +4,7 @@
 
 A portable multi-agent engineering toolkit: a durable file-based
 collaboration protocol for coordinating separate Claude Code / Codex
-sessions on one goal (Rally + the Agent Table), a required independent
+sessions on one goal (the Agent Table protocol and its `agent-table` skill), a required independent
 adversarial plan-challenge gate, a PR-review specialist for each harness,
 and a set of generic engineering-discipline rules distilled from real
 production use elsewhere. It has no product code and no company-specific
@@ -59,11 +59,11 @@ agents/
 commands/
   review.md                            <- lightweight solo-review checklist
 claude_skills/
-  rally/                               <- Rally, Claude Code transport
+  agent-table/                               <- Agent Table skill, Claude Code transport
   adversarial-plan-review/             <- thin pointer to the Codex-canonical skill
   feature-discovery/, story-delivery/  <- thin pointers to the Codex-canonical skills
 codex_skills/
-  rally/                               <- Rally, Codex transport
+  agent-table/                               <- Agent Table skill, Codex transport
   adversarial-plan-review/             <- canonical adversarial-plan-review skill
   feature-discovery/, story-delivery/  <- canonical workflow skills
   pr-review/                           <- Codex PR reviewer (gh CLI)
@@ -98,8 +98,8 @@ Deliver the smallest reliable change that satisfies the owner's goal and preserv
 
 ## Work Modes
 
-Two workflows cover most multi-agent work. Both run on the Agent Table and
-Rally described below.
+Two workflows cover most multi-agent work. Both run on the Agent Table protocol and the
+`agent-table` skill described below.
 
 - **Feature Discovery** (`/feature-discovery`, Codex `feature-discovery`):
   deep investigation of every call site, then a proposal, a feature plan, and
@@ -119,8 +119,8 @@ Table protocol instead of the owner relaying messages between chats:
 - [Agent_Table_Collaboration_Rules.md](strategies/Agent_Table_Collaboration_Rules.md)
   is the full contract: seats, turn rules, approval receipts, the UI
   presentation approval gate, and failure/recovery handling.
-- Claude Code sessions use [`/rally`](claude_skills/rally/rally.md); Codex
-  sessions use [`$rally`](codex_skills/rally/SKILL.md). Same `TABLE.md`
+- Claude Code sessions use [`/agent-table`](claude_skills/agent-table/agent-table.md); Codex
+  sessions use [`$agent-table`](codex_skills/agent-table/SKILL.md). Same `TABLE.md`
   format, different transport per harness. Handoff notifications do not cross
   harnesses: on a table mixing Codex and Claude seats, the owner tells the
   receiving session to check the table whenever the turn passes between them.
