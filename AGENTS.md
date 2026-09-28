@@ -71,7 +71,7 @@ Deliver the smallest reliable change that satisfies the owner's goal and preserv
 
 1. **Inspect before planning.** Inspect the relevant code, contracts, tests, configuration, runbooks, and evidence. Name the concrete affected files, endpoints, schemas, and operational lanes in the plan. Do not substitute another agent's summary for inspection. Identify any inaccessible core surface and the affected decision; do not silently defer a core unknown to implementation.
 2. **Require evidence for scope.** Each requirement must support a requested outcome, preserve actual existing behavior/data, or prevent a concrete reachable correctness, security, financial, or reliability failure. Cite its basis briefly. A prior plan calling something mandatory is not sufficient justification. Speculative future features and hypothetical unsupported states are not release gates.
-3. **Inventory before compatibility engineering.** Establish the affected existing data, active clients, and supported writers before designing historical reconstruction or backfill. With an empty affected inventory, prefer a verified cutover and prevention of unsupported writes over a general compatibility framework. Recheck at cutover and stop the affected operation on unexpected data; never discard existing users, links, purchases, or progress because a different table is empty.
+3. **Inventory before compatibility engineering.** Establish the affected existing data, active clients, and supported writers before designing historical reconstruction or backfill. With an empty affected inventory, prefer a verified cutover and prevention of unsupported writes over a general compatibility framework. Recheck at cutover and stop the affected operation on unexpected data; never discard existing users, links, records, or progress because a different table is empty.
 4. **Reuse before expanding.** Before adding a service, abstraction, migration framework, rollout mode, or approval mechanism, briefly explain why existing machinery cannot meet the requirement. Remove obsolete constraints before adding replacements. Do not turn feature work into a reporting redesign, dormant-surface retrofit, or platform project without owner-approved scope expansion.
 5. **Plan around working journeys.** Prefer a few end-to-end milestones over a layer-by-layer waterfall. Do not freeze every future schema in the first phase. Planning is sufficient when outcomes, existing-user preservation, affected contracts, main risks, and executable acceptance tests are clear. Resolve ordinary internal implementation details through code and tests; reopen only genuinely affected contracts when evidence changes.
 6. **Review necessity as well as correctness.** Reviewers must challenge unjustified scope and consider removing or simplifying the requirement behind a finding. Blocking findings need a concrete failure or violated requirement, affected users/invariants, and reproduction or traceable code/data evidence. A failure need not have occurred in production to matter. Style preferences and speculative hardening remain nonblocking; do not manufacture findings to fill a quota.
@@ -136,6 +136,30 @@ Table protocol instead of the owner relaying messages between chats:
 - Before creating or switching branches, verify local work will not be dropped, hidden, overwritten, or stranded. If there is any risk to existing local changes, stop and tell the user before proceeding.
 - After pushing a branch, provide the PR link when the remote returns one. If the owner requested only a push or PR, stop at that requested boundary. If the owner requested a merge, complete the full remote merge and local `main` synchronization workflow above without asking the owner to confirm the merge.
 
+## Environments And Data Access
+
+- **No production data access.** Agents cannot read the production database
+  or storage. Never assume, request, or plan around production reads. When a
+  decision depends on production data, say so explicitly, state what the
+  available evidence cannot prove, and either design for the unknown or name
+  the person who can run the check and the exact read-only query to give them.
+- **QA database, read-only.** Use it for inventory, shape checks, and dated
+  counts. Label QA counts as QA; they are evidence of shape, not of production
+  volume. Never write to QA from an agent session.
+- **Local database and Azure Storage.** Development and tests run against a
+  local database and local Azure Storage (the Azurite emulator, or a personal
+  development storage account). They must be set up before implementation or
+  QA starts; a plan whose verification needs them names the setup. Tests must
+  never point at QA or any shared environment.
+- **Content releases ship through GitHub Actions.** Content and data changes
+  that production needs go through the team's GitHub Actions release
+  workflow, separate from the application deploy. Never hand-apply content to
+  a shared environment, and never treat an application deploy as a content
+  release.
+- **Third-party services.** Changes that call or configure third-party
+  services name the service, the credentials' location (never in code, plans,
+  or logs), and how to undo the change on the service's side.
+
 ## Feature Flag Wiring Discipline
 
 When adding, renaming, deleting, defaulting, or relying on any feature flag, agents must prove the full production wiring in the same change/review. Do not stop at local/dev config.
@@ -163,7 +187,7 @@ Every new feature flag must be enabled in the normal local development lane whil
 
 ## Source-Of-Truth Fix Discipline
 
-- Do not hide invalid backend/domain state with frontend filters, suppression, or display-only guards. If user state, tasks, results, entitlements, purchases, onboarding, or progression data is wrong, fix the source-of-truth logic that created or returned the bad state.
+- Do not hide invalid backend/domain state with frontend filters, suppression, or display-only guards. If user state, tasks, results, permissions, onboarding, or progression data is wrong, fix the source-of-truth logic that created or returned the bad state.
 - Frontend guards are acceptable for defensive rendering, permissions display, loading/null handling, and graceful empty states, but they must not be the primary fix for impossible domain states. Frontend filtering that hides invalid business state is code bloat/poison unless it is paired with a backend invariant fix, data cleanup, and regression coverage.
 - When a bug appears in user-facing state, first identify whether the bad data should exist at all. If not, prevent creation, repair existing state through the proper backend/data lane, and add regression tests or health checks so the issue cannot resurface later through another UI surface.
 

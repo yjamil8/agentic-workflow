@@ -68,7 +68,7 @@ write its review artifact and table handoff. It must not:
   decision when the evidence materially changes that choice
 - replace a required domain specialist, such as a product-domain expert or a
   release/deployment specialist, where your team has established one
-- authorize merge, a data/content release, a production write, or deployment
+- authorize merge, a content release, a production write, or deployment
 
 If the assigned session is not independent, it records the conflict and
 returns the turn for reassignment. It never simulates independence by changing
@@ -217,7 +217,7 @@ make a raw country code, internal taxonomy, database value, or protocol concept
 an acceptable customer task. Prefer trusted derivation, a familiar control, or
 removal, based on inspected constraints.
 
-Checkout, payment, account access, and equivalent conversion-critical surfaces
+Account access, permissions, data-loss, and other high-consequence surfaces
 receive the highest scrutiny: extra friction, ambiguity, stale state, races,
 and error recovery are product failures even when the underlying API is valid.
 
@@ -228,7 +228,7 @@ Trace consequences across time and consumers:
 - before, during, immediately after, retry, and later return states
 - success, partial success, failure, cancellation, timeout, and rollback
 - duplicate submission, concurrency, out-of-order response, and stale UI state
-- existing accounts, links, purchases, progress, drafts, and historical data
+- existing accounts, links, records, progress, drafts, and historical data
 - other writers and readers of changed schemas, flags, APIs, events, and caches
 - analytics, support, accessibility, localization, SEO, and operational response
   when the change actually affects them

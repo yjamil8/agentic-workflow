@@ -771,8 +771,8 @@ reversible preparation such as:
 - reviewing deployment and migration requirements
 - preparing release pins or a reviewable release candidate when authorized
 - running the required validate-only or readiness checks
-- identifying separate data or content release work that an app deploy does
-  not carry
+- identifying separate content release work (the GitHub Actions content
+  release workflow) that an app deploy does not carry
 - writing a dated deployment-readiness artifact linked to the governing plan
 
 Passing all table gates does not authorize production deployment. A table
@@ -919,7 +919,7 @@ a new assertion, which must fail when its invariant is violated on purpose.
 
 ## Blast Radius Sets The Rigor Floor
 
-A production write path shared by multiple writers, a payment or entitlement
+A production write path shared by multiple writers, an access-control or permissions
 path, or a shared design-token/component surface requires deliberate,
 sequenced verification: trace the governing invariant or write path, enumerate
 the affected consumers, and do not approve on a partial trace. This is a floor

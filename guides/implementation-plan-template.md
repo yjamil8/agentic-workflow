@@ -51,8 +51,9 @@ writers change. Delete this section otherwise.>
 
 ### Existing data
 
-<Affected persisted data, dated counts from a read-only production query, and
-what the counts do and do not prove.>
+<Affected persisted data, with dated counts from the QA database (read-only,
+labeled as QA). Production is not readable: say what the QA data cannot tell
+you about production, and design for that unknown or name who can check it.>
 
 ### Active clients and writers
 
@@ -83,8 +84,8 @@ mechanism is not enough, and what the change deliberately does not add.>
 
 ## Security, privacy, and compliance
 
-<When applicable: authentication, authorization, secrets, personal data,
-payments, or regulated data are touched. Delete this section otherwise.>
+<When applicable: authentication, authorization, secrets, personal data, or
+regulated data are touched. Delete this section otherwise.>
 
 - Trust boundaries and authorization checks affected: <...>
 - Personal or regulated data: <what is read, stored, logged, or sent where,
@@ -143,18 +144,23 @@ Verification:
 <exact commands, and the result that counts as passing>
 ```
 
-<Payments and other irreversible paths: prove against the real provider's
-test mode, not a mock.>
+Local environment: <local database and Azure Storage (Azurite) setup, seed
+data, and configuration the commands need; never QA or a shared environment>.
+
+Third-party services: <sandbox or test account used; if a double stands in,
+how it matches the real service's responses and errors>.
 
 ## Rollback
 
-<When applicable: data, configuration, an external system (payment provider,
-identity provider, CDN, third-party service), or anything else a code revert
-does not undo. Delete this section otherwise.>
+<When applicable: data, a content release, configuration, a third-party
+service, or anything else a code revert does not undo. Delete this section otherwise.>
 
-1. Measure the blast radius first (read-only): <query and today's dated
-   result>.
-2. Ordered steps: <commands, in one transaction where data is involved>.
+1. Measure the blast radius first: <the QA result, labeled as QA, and the
+   exact read-only query for someone with production access to run before
+   rolling back>.
+2. Ordered steps: <commands, in one transaction where data is involved; for
+   content, re-run the GitHub Actions release workflow with the previous
+   version>.
 3. Kept and lost: <what rollback preserves, and accepted collateral>.
 
 Invariant: <what must remain true after rollback>.
@@ -166,15 +172,14 @@ Invariant: <what must remain true after rollback>.
 
 ## Delivery and authority
 
-<When applicable: a deploy, data migration or release, external mutation,
-hotfix, multi-repo change, or any step needing separate approval. Delete this
+<When applicable: a deploy, content release, third-party change, hotfix, multi-repo change, or any step needing separate approval. Delete this
 section otherwise.>
 
 - Branch and lineage: <worktree, branch, base; for a production hotfix, the
   exact commit currently deployed, per your release records>.
 - Deploy: <services, environments, and order>.
-- Data or content release: <how it ships separately from the code deploy, if
-  it does>.
+- Content release: <the GitHub Actions release workflow, its inputs, and its
+  order relative to the app deploy>.
 - Change management: <change ticket or approval record, if your organization
   requires one>.
 - Separate approvals: <each step needing explicit approval>. Plan approval is

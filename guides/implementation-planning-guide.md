@@ -42,8 +42,8 @@ your plan against each one before handing it to a reviewer.
 7. **Undefined measurement or unmeasured assumptions** (3). Events that do not
    exist, a sample size that contradicts the plan's own evidence, an assumed
    rate nobody measured. Fix: name the exact event or query and measure first.
-8. **No executable verification for a claim** (2), especially on money or
-   data paths. Fix: exact commands and the observable result that counts as
+8. **No executable verification for a claim** (2), especially on data,
+   content, or third-party paths. Fix: exact commands and the observable result that counts as
    proof.
 
 The single strongest lesson: most first-round blocks come from inventory that
@@ -77,14 +77,14 @@ match the smallest plan in the source survey that reviewers approved in round
 | Inventory and compatibility boundary | When applicable | Persisted data, an API or event contract, or its clients or writers change |
 | Requirements and out of scope | Always | |
 | Proposed changes | Always | |
-| Security, privacy, and compliance | When applicable | Authentication, authorization, secrets, personal data, payments, or regulated data |
+| Security, privacy, and compliance | When applicable | Authentication, authorization, secrets, personal data, or regulated data |
 | Feature flags and configuration | When applicable | Behavior is gated or configuration changes |
 | UI presentation, exact approved scope | When applicable, then mandatory | Any user-visible change |
 | Milestones | When applicable | Two or more journeys that can each be demonstrated alone |
 | Acceptance and verification | Always | |
-| Rollback | When applicable | Data, config, or an external system a code revert does not undo |
+| Rollback | When applicable | Data, a content release, config, or a third-party service a code revert does not undo |
 | Risks and how not to misread results | Always | |
-| Delivery and authority | When applicable | Deploy, data release, external mutation, hotfix, multi-repo, or separate approval |
+| Delivery and authority | When applicable | Deploy, content release, third-party change, hotfix, multi-repo, or separate approval |
 | Required updates | When applicable | A documentation or process obligation your team's rules attach to the change |
 | Review request | When applicable | v2 onward, or any re-review |
 
@@ -130,8 +130,11 @@ established completeness (finding 1 above).
 
 Three parts that together prevent findings 1 and 2:
 
-- **Existing data**: what persisted data is affected, with dated counts from a
-  read-only query, and what the evidence rules out as well as what it shows.
+- **Existing data**: what persisted data is affected, with dated counts from
+  the QA database (read-only, labeled as QA), and what the evidence rules out
+  as well as what it shows. Production is not readable, so say what QA cannot
+  tell you and design for that unknown, or name who can check it (see
+  `AGENTS.md` "Environments And Data Access").
 - **Active clients and writers**: every reader and writer of the changed
   contract, including cached clients and deployed versions that will keep
   sending the old shape.
@@ -141,8 +144,8 @@ Three parts that together prevent findings 1 and 2:
 Example, generalized from an approved plan:
 
 ```text
-Existing data: the affected rows are append-only event records. No user,
-order, or entitlement record needs reconstruction or backfill; historical rows
+Existing data: the affected rows are append-only event records. No user or
+account record needs reconstruction or backfill; historical rows
 keep their original meaning.
 Active clients and writers: the web client is the only writer of this
 contract, through one ingestion endpoint. Older cached client bundles will
@@ -205,21 +208,26 @@ Concrete scenarios, including the awkward ones:
 > attempt, not a new one.
 
 Not "add integration tests". Add the exact commands and observable results
-that count as passing, and any dated post-deploy read-only check. Each new
-regression test must fail on the base commit before the fix. Payments and
-other irreversible paths need proof against the real provider's test mode,
-not mocks.
+that count as passing, and how the change will be confirmed after deploy
+through behavior or telemetry you can access. Each new regression test must
+fail on the base commit before the fix. Name the local database and Azure
+Storage (Azurite) setup the verification needs; tests never touch QA or any
+shared environment. For third-party services, use a sandbox or test account
+where one exists, and make any test double match the real responses and
+errors.
 
 ### Rollback
 
-When a code revert is not enough: measure the blast radius first, then give
+When a code revert is not enough: measure the blast radius first (in QA,
+plus the exact read-only query for someone with production access), then give
 ordered steps, then say what is kept and lost, then the invariant rollback
 must preserve. A pure code change needs no section. Example, generalized from
 an approved plan:
 
 ```text
 Measure first: count the parent batches that contain generated records and
-the unrelated records inside them (today: 1 batch, 0 unrelated records).
+the unrelated records inside them (in QA today: 1 batch, 0 unrelated records;
+the same query is run against production by someone with access before rollback).
 Then, in one transaction: delete the parent batches that contain generated
 records (children cascade), then delete the remaining generated records.
 Records a user later promoted by hand are intentionally kept. Any other
@@ -237,8 +245,8 @@ under-reported; do not read it as a campaign improvement."
 ### Delivery and authority
 
 The branch and lineage (for a production hotfix, start from the exact commit
-currently deployed, not from `main`), the deploy order, any data or content
-release that ships separately from the code, any change-management record your
+currently deployed, not from `main`), the deploy order, any content release
+through the GitHub Actions release workflow (separate from the code deploy), any change-management record your
 organization requires, each step needing separate explicit approval, and a
 stopping rule for multi-day work. Plan approval is never merge or production
 approval.
