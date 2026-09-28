@@ -15,8 +15,10 @@ layout. `CLAUDE.md` imports it, so Claude Code and Codex read the same rules.
   messages between chats.
 - **Rally** ([claude_skills/rally](claude_skills/rally), [codex_skills/rally](codex_skills/rally)):
   the transport for that protocol. Create, join, advance, pause, and resume a
-  table. The `TABLE.md` format is identical for both tools, so a Codex session
-  and a Claude Code session can hold seats at the same table.
+  table. The `TABLE.md` format is identical for both tools, so Codex and
+  Claude Code sessions can share a table, but handoff notifications do not
+  cross harnesses: when the turn passes between them, you tell the receiving
+  session to check the table.
 - **Adversarial plan review** ([strategies/Agent_AdversarialPlanReviewer.md](strategies/Agent_AdversarialPlanReviewer.md),
   [codex_skills/adversarial-plan-review](codex_skills/adversarial-plan-review)):
   an independent challenge between plan approval and implementation. A

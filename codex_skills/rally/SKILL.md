@@ -356,6 +356,15 @@ If the follow-up needs its own plan, review gate and several turns, it is a new
 workstream and gets a new table with a distinct goal. The test is whether it
 shares the completed goal or replaces it, not whether it touches the same files.
 
+## Tables with Claude Code seats
+
+A Claude Code session can hold a seat at the same table; it runs its own
+helper (`rally_claude.py`). Notifications do not cross harnesses: `codex queue`
+reaches only Codex sessions. When you hand the turn to a Claude seat, complete
+the handoff as usual; `notify` will record the attempt as `uncertain` because
+the queue cannot reach that session. Then tell the owner which Claude session
+to prompt to check the table. Do not retry the notification.
+
 ## Existing non-Rally tables
 
 Keep their canonical file, turn, artifacts, and history. Do not run `create`

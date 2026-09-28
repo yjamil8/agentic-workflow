@@ -49,7 +49,7 @@ owner's instruction for this work.
 
 Before claiming substantive work, verify:
 
-- this session is distinct from the plan author and ordinary plan reviewer
+- this session is distinct from all material plan authors/co-planners and the ordinary plan reviewer
 - the table links the exact canonical plan source, version, and reproducible
   identity
 - an ordinary review approved that exact plan version
@@ -78,6 +78,20 @@ Follow the agent contract's four passes:
    dependency and service boundaries, consistency and retry model, trust
    boundaries, load behavior, failure containment, compatibility, and
    maintenance cost rather than assuming ordinary approval settled them.
+   For costly, high-volume, long-running or consequential operations, apply the
+   contract's **Prove Usefulness Before Releasing Scale** requirements. Inspect
+   the actual execution path, outcome checks, bounded representative canary,
+   raw output and downstream deliverable. Challenge query semantics, ordering,
+   coverage and total resource exposure where relevant. Research and use of an
+   existing tool are not exemptions. Budget approval, successful requests and
+   another agent's summary do not prove usefulness. Missing or failed proof
+   blocks bulk execution and dependent spending; require an actual stop before
+   expansion, not concurrent canary/bulk work or an automatically continuing
+   loop. Never run a costly or state-changing operation as part of read-only
+   ADR inspection.
+   Apply the contract's research-selection, causal-scope and outcome-measure
+   checks where relevant. A transparent evidence gap is still unfinished work;
+   distinguish a scoped technical clear from the owner outcome being achieved.
 3. Read the ordinary review. Remove resolved duplicates and identify claims it
    could not actually prove.
 4. Write one bounded artifact and issue `clear`, `changes requested`, or
@@ -106,6 +120,14 @@ Use the artifact outline, finding standard, and gate receipt from
 approval artifact, important inspected evidence, requirement trace, journey
 model, alternatives considered, assumption inversions, second- and third-order
 effects, technical-design challenge, open count, and residual risk.
+For consequential operations, record the inspected canary evidence, outcome
+checks, resource bounds and exact scope released or held. If tooling must be
+implemented before proof is possible, clear only the explicit preparation or
+canary milestone, record bulk work as held in the table, and name the existing
+review seat that must inspect evidence before releasing expansion. Do not give
+whole-plan clearance with an unproven method deferred to "validate later".
+Repeat only affected proof when material behavior changes; reuse adequate
+existing evidence and do not create additional approval layers.
 
 Route through Rally:
 

@@ -580,10 +580,31 @@ The planner owns:
 - proposed implementation sequence
 - validation and rollback plan
 - the initial candidate scope
+- the causal case connecting the work to the owner outcome, including contrary
+  evidence, material unknowns and what observation would change the approach
+- reconciliation with existing assets, adjacent milestones and current owner
+  decisions; a proposed quantity or protection needs a value or failure basis
+- an honest distinction between completed deliverables and unproven outcomes,
+  with a next action for material gaps rather than declaring disclosure complete
 
 The planner does not approve its own plan. When ready, it records the exact plan
 version and commit, links the same canonical file, adds a brief handoff summary,
 and hands the turn to the plan reviewer.
+
+### Co-Planner (Optional)
+
+The owner may appoint an existing session as `co_planner` at creation or later.
+Follow [Agent_CoPlanner.md](Agent_CoPlanner.md). This is a planning contributor,
+not another approval seat. The planner remains accountable for integrating
+its evidence and resolving recommendations in the canonical plan. When absent,
+the duties remain with the planner. Do not add a mandatory co-planner checkpoint.
+
+Use normal Rally registration and turn ownership. Joining while another seat
+owns the turn means standby; it does not authorize concurrent edits. An invited
+co-planner receives a bounded planning question, linked inputs, and a return
+seat. It returns substantive evidence and a recommendation, not an approval.
+A session that materially co-authored the candidate cannot serve as its
+independent ordinary reviewer or plan challenger.
 
 ### Plan Reviewer
 
@@ -595,7 +616,19 @@ The plan reviewer must:
 - read `TABLE.md` and the exact linked plan
 - inspect important cited code and runbook surfaces rather than trusting the
   planner's summary
-- separate verified existing rules from proposals and owner decisions
+- separate verified existing rules from proposals and owner decisions; trace
+  material scope changes to the original owner instruction, not an agent paraphrase
+- trace material conclusions through the actual data or code to acceptance;
+  inspect contradictory evidence and whether the research selection supports
+  the breadth of the conclusion (a search of one repository is not a full inventory)
+- check existing assets and adjacent milestones for overlap, conflict or silently
+  dropped scope, including changes introduced by earlier review suggestions
+- reproduce consequential arithmetic against the actual algorithm, exclusions
+  and units; test a meaningful counterexample rather than only the happy example
+- verify whether a deliverable is prepared, built, enabled, deployed or proven;
+  match a claimed blocker to the actual affected journey and failure condition
+- for costly or consequential scale, inspect the actual bounded canary and output
+  under AGENTS.md's proof-before-scale rule before releasing expansion
 - for a UI-touching plan, especially one introducing new components, verify
   it actually addresses brand consistency and UX quality rather than treating
   the change as pure implementation mechanics
@@ -623,7 +656,7 @@ coder.
 The plan challenger follows
 [Agent_AdversarialPlanReviewer.md](Agent_AdversarialPlanReviewer.md) after the
 ordinary reviewer approves the exact plan version and before implementation.
-It must be a separate session from both the planner and ordinary plan reviewer.
+It must be a separate session from the planner, any material co-planner/co-author, and ordinary plan reviewer.
 
 The owner may start that session before its turn with only the table ID. It
 locates the unique table, joins as `plan_challenger`, and stands by when another
@@ -801,6 +834,20 @@ currently violates this" is a data-cleanliness observation, not proof the
 violation cannot occur; it survives only until the next writer disagrees. Name
 the constraint, migration, or code path that actually prevents the case, not
 the absence of a current example.
+## Correct Working Instructions After A Decision Changes
+
+The planner or responsible author updates the actual operative rows, commands,
+recommendations and tracking-ticket next actions affected by a correction. A precedence
+note or linked decision alone is insufficient while a worker can still follow
+the old instruction. Preserve completed reviews and historical evidence; mark
+superseded guidance in working documents and link the controlling decision.
+If authority remains genuinely ambiguous, hold only the affected action and
+record the exact unresolved choice. Do not invent an owner decision to tidy it.
+
+The ordinary reviewer checks this reconciliation in the next affected review;
+no separate bookkeeping review is required. The handoff names any remaining
+contradiction and its owner so dependent work cannot treat it as settled.
+
 ## Review Findings And Responses
 
 Review artifacts should be concise, durable, and independently understandable.
@@ -881,6 +928,16 @@ Use Markdown checkboxes so the state is visible:
 - [x] Residuals and next actor. Evidence: none, or the listed non-blocking
   observations; next actor is explicit. Provenance: reviewer-inspected.
 ```
+
+For each material conclusion, the receipt states what the inspected evidence
+establishes and what it cannot establish, with the denominator, units, date,
+environment or observation depth when those affect the conclusion. A section,
+checklist, successful request or passing schema is not evidence of usefulness.
+Bind approval to the exact released scope and name held operations and unmet
+owner outcomes. Technical readiness can be approved while a business-outcome
+hypothesis remains unproven; it cannot be reported as that outcome achieved.
+For consequential scale, link the inspected canary, outcome checks, resource
+bound and released/held batches. Missing proof leaves expansion held.
 
 An implementer-reported claim alone cannot satisfy a material row.
 Independently inspect or reproduce it, or leave the row unchecked. Retain
@@ -1117,6 +1174,17 @@ agent has completed the intervening turn. Re-read the table and active artifacts
 instead of relying on your prior chat context, then take the current assignment
 if the table assigns it to you.
 ```
+
+### Add An Optional Co-Planner
+
+```text
+Use Rally to join table <table ID or absolute TABLE.md path> as co_planner.
+Follow Agent_CoPlanner.md. Register and stand by until assigned a turn.
+```
+
+The owner gives this prompt to an existing session. The current planner then
+uses the normal handoff to assign the planning question; the owner need not
+relay artifacts or activate each turn. Preserve pauses and existing assignments.
 
 ### Seat A Specialist
 

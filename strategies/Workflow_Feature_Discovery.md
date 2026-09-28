@@ -17,10 +17,13 @@ stages, artifacts, and gates specific to feature discovery.
 |---|---|---|
 | Planner | `planner` | Investigates, writes the proposal, feature plan, and stories. |
 | Reviewer | `reviewer` | Reviews each stage artifact; never the author. |
-| Challenger | `plan_challenger` | Runs the adversarial review at the stages the owner selected. A different session from both others. |
+| Challenger | `plan_challenger` | Runs the adversarial review at the stages the owner selected. A different session from all others. |
+| Co-planner (optional) | `co_planner` | Develops the investigation, options, or strategy with the planner under [Agent_CoPlanner.md](Agent_CoPlanner.md). Adds no approval gate. |
 
 The planner and reviewer must be different sessions. The challenger seat is
-needed only if the owner selects at least one challenged stage.
+needed only if the owner selects at least one challenged stage. A co-planner is
+worth adding for a large feature whose investigation spans several services; it
+counts as a co-author, so it cannot also review or challenge the same work.
 
 ## Artifacts
 

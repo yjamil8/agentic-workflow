@@ -44,6 +44,7 @@ CLAUDE.md                              <- imports AGENTS.md (@AGENTS.md)
 strategies/
   Agent_Table_Collaboration_Rules.md   <- the Agent Table protocol contract
   Agent_AdversarialPlanReviewer.md     <- the plan_challenger judgment contract
+  Agent_CoPlanner.md                   <- optional co_planner seat
   Workflow_Feature_Discovery.md        <- feature: investigate, propose, plan, stories
   Workflow_Story_Delivery.md           <- story: plan, implement, review, PR
 guides/
@@ -88,6 +89,12 @@ Deliver the smallest reliable change that satisfies the owner's goal and preserv
 6. **Review necessity as well as correctness.** Reviewers must challenge unjustified scope and consider removing or simplifying the requirement behind a finding. Blocking findings need a concrete failure or violated requirement, affected users/invariants, and reproduction or traceable code/data evidence. A failure need not have occurred in production to matter. Style preferences and speculative hardening remain nonblocking; do not manufacture findings to fill a quota.
 7. **Keep verification proportional.** When independent review is requested, use one review per meaningful checkpoint, with focused re-review and affected tests after fixes. Retain exact reviewed source identities and run comprehensive integration tests at meaningful integration checkpoints. Do not invalidate unrelated evidence after bookkeeping-only changes, require separate agent reviews of approval-record commits, or create recursive approval chains. Recheck documentation/configuration changes that actually alter behavior or authority. Existing explicit owner checkpoints require owner resolution before being changed, not silent bypass.
 8. **Expose cost and stop scope creep.** State a rough effort expectation for substantial work. If scope or elapsed effort materially exceeds it, promptly explain the expansion, actual user-visible progress, and recommended cuts. Seek approval for material expansion or new authority, not routine in-scope engineering decisions. Continue unaffected authorized work unless paused. Do not add another audit, amendment, or automation layer merely to manage the overhead of earlier ones.
+9. **Prove the outcome before scaling the operation.** Before a costly, high-volume, long-running, or consequential operation (a migration, backfill, bulk data job, content release, or third-party change), define what a useful, correct result must contain and run the smallest representative canary through the actual execution path. Agents have no production access, so the canary runs against the local database and Azurite with QA-shaped data, as a single-item run of the GitHub Actions release workflow, or in a third-party sandbox. Preserve the material query parameters, ordering, filters, transformations, and destination behavior intended for the larger run; reduce only its scope or volume. Inspect the actual output against known expected examples and obvious failure cases, both the raw result and any transformed deliverable that downstream work will consume. A successful API response, valid schema, passing mock, approved plan, or finished job does not establish that the operation achieves the owner's goal.
+
+   The executing agent must read the canary output before expanding, and the planner or reviewer responsible for releasing the larger run must inspect that evidence rather than accept another agent's summary. Record the exact operation, result, and checks in the existing work record. Reuse prior proof only when it covers the same material behavior; repeat the bounded proof when a change invalidates it. If the canary fails or its usefulness remains uncertain, stop expansion and dependent work, fix the method, and prove it again. Never run further batches on unvalidated inputs.
+
+   Cloud spend, third-party quotas and rate limits, and compute time are resources the owner entrusted to the agent. Permission to run is not evidence that a method works. Report success only after inspecting the resulting artifact or state, and distinguish attempted execution, technical completion, and verified usefulness.
+10. **Make conclusions and corrections usable.** For a material recommendation, separate observed facts, inference, and the proposed experiment; include the strongest contrary evidence and what would change the decision. Match causal claims and blockers to the affected journey, population, and time window. A leading indicator, an approved plan, merged code, or a prepared artifact does not prove the owner's outcome. When a decision changes, the responsible author updates the operative plan, instructions, and tracking tickets before handing off dependent work, preserving historical reviews. Disclosure of an evidence gap does not complete the work needed to resolve it; retain the owner outcome and a named next action.
 
 ## Work Modes
 
@@ -114,7 +121,13 @@ Table protocol instead of the owner relaying messages between chats:
   presentation approval gate, and failure/recovery handling.
 - Claude Code sessions use [`/rally`](claude_skills/rally/rally.md); Codex
   sessions use [`$rally`](codex_skills/rally/SKILL.md). Same `TABLE.md`
-  format, interoperable, different transport per harness.
+  format, different transport per harness. Handoff notifications do not cross
+  harnesses: on a table mixing Codex and Claude seats, the owner tells the
+  receiving session to check the table whenever the turn passes between them.
+- The owner may add an existing session as an optional `co_planner` under
+  [Agent_CoPlanner.md](strategies/Agent_CoPlanner.md). It develops strategy and
+  evidence with the planner and adds no approval gate; a co-author cannot
+  independently approve or adversarially clear the plan it helped create.
 - Every implementation plan requires an independent adversarial plan
   challenge after ordinary plan approval and before implementation, unless
   the owner explicitly waives it in advance by saying `NO ADR` or `NO_ADR`.
@@ -123,7 +136,8 @@ Table protocol instead of the owner relaying messages between chats:
   (canonical at [codex_skills/adversarial-plan-review/SKILL.md](codex_skills/adversarial-plan-review/SKILL.md),
   thin pointer for Claude at [claude_skills/adversarial-plan-review/command.md](claude_skills/adversarial-plan-review/command.md))
   for how to run it. The `plan_challenger` must be a different session from
-  both the planner and the ordinary plan reviewer.
+  the planner, any material co-planner or co-author, and the ordinary plan
+  reviewer.
 - A solo, low-stakes change that does not warrant a written plan needs no
   table and no adversarial review. The machinery exists for coordinated
   multi-agent work and consequential plans, not every edit. Once a written
@@ -182,6 +196,24 @@ Table protocol instead of the owner relaying messages between chats:
   workflow, separate from the application deploy. Never hand-apply content to
   a shared environment, and never treat an application deploy as a content
   release.
+- **Protect your local working data.** Your local database and local Azure
+  Storage hold your working state. No agent may drop, recreate, clean-restore,
+  truncate, or wipe them without explicit owner approval in the current
+  conversation for that exact operation. This rule comes from a real incident
+  in which a test switched its host to a development environment, fell through
+  to the working connection string, and its database reset replaced the whole
+  working database.
+  - Tests use their own throwaway database and storage container (or an
+    in-memory provider), never the working ones. Never point a test host at a
+    development configuration that can resolve to the working connection.
+  - Before running anything that creates, drops, cleans, seeds, or resets a
+    database or storage container, prove which one it will connect to. A
+    passing test proves nothing about what it deleted.
+  - Restores and experiments go into a new, uniquely named database. Replace
+    the working database only by a rename swap with owner approval, keeping
+    the old one.
+  - Take a backup before any owner-approved destructive operation. If a guard
+    or safety check refuses an operation, stop and report; never work around it.
 - **Third-party services.** Changes that call or configure third-party
   services name the service, the credentials' location (never in code, plans,
   or logs), and how to undo the change on the service's side.

@@ -45,7 +45,7 @@ planner -> plan reviewer -> plan challenger -> coder
 
 The plan challenger clears an **adversarial plan challenge** gate. It does not
 replace or issue the ordinary plan approval. It must be a different session
-from both the planner and the ordinary plan reviewer for that plan version.
+from the planner, any material co-planner/co-author, and the ordinary plan reviewer for that plan version.
 The coder may not begin until both gates identify and clear the same exact plan
 version, or the table records a valid owner waiver.
 
@@ -200,6 +200,9 @@ Ask before checking implementation detail:
 - Is the plan solving a demonstrated current problem or preparing for a
   hypothetical unsupported future state?
 - What is the smallest reliable cutover once affected inventory is known?
+- What observed value or reachable failure justifies a proposed count, quota or
+  protection? If it adds cost or removes useful content, is that tradeoff explicit
+  and within owner authority rather than a reviewer's invented requirement?
 
 Every added field, service, abstraction, migration mode, approval layer, and UI
 instruction carries a proof burden. Complexity is not evidence of rigor.
@@ -243,6 +246,11 @@ Trace consequences across time and consumers:
 - what becomes newly possible, newly impossible, or silently inconsistent
 
 Name the concrete chain. “Could have downstream effects” is not a finding.
+A failure on one path or condition does not establish a global blocker: trace
+which users, tenants, environments and transitions are affected and which
+still work. One failed request does not by itself prove the whole flow is
+broken. Keep the real scoped risk without using it to stop unrelated
+authorized work.
 
 ### 5. Assumption Inversion
 
@@ -256,6 +264,11 @@ the consequential ones. Examples:
 - What if there are zero affected rows? What if one appears at cutover?
 - What if a feature flag is enabled on only one side of a service boundary?
 - What if the response for an earlier input arrives after the current one?
+- What if the investigation's searches or sample excluded the strongest
+  alternative or an unlisted caller?
+- What if a proposed quantity (batch size, retry count, limit) raises cost or
+  effort without improving the outcome?
+- What if individually acceptable items repeat the same defect across a batch?
 
 An inverted assumption blocks only when inspection shows a reachable failure,
 a violated owner requirement, or a risk whose consequence demands an owner
@@ -308,6 +321,89 @@ Ask what the proposed proof is capable of detecting:
 Require a failing control for new assertions when practical: prove that the
 test detects the broken invariant, not only that it passes the proposed code.
 Keep verification proportional to actual blast radius.
+
+For research and strategic plans, examine whether the collection method could
+have discovered an answer different from the proposal. Inspect contrary sources,
+sampling and observation depth before accepting broad conclusions. Check whether
+counts use the actual runtime exclusions/deduplication rather than an arithmetic
+approximation. Distinguish source-specific absence from universal absence.
+
+Test whether the success measure answers the owner's decision: a request
+succeeding, a job finishing, data arriving, and users actually getting the
+intended result are different outcomes. A handful of observations cannot
+justify confident conclusions about a whole population. A mechanism
+being built, enabled or deployed does not show that it has worked end to end.
+Ask for the smallest discriminating proof, not a larger speculative audit.
+Disclosing uncertainty does not complete missing strategy; clear only the
+scope supported by evidence and keep the remaining owner outcome explicit.
+
+#### Prove Usefulness Before Releasing Scale
+
+For every costly, high-volume, long-running or consequential operation in the
+plan, independently ask: **What proves this exact method produces the owner's
+intended result before it consumes the full budget or affects the full scope?**
+This applies to migrations, backfills, bulk data jobs, content releases,
+third-party API calls, generation, and operational runs as well as product
+code. Calling a step research or using an existing tool does not exempt it.
+Cloud spend, third-party quotas and rate limits, and compute time are
+entrusted resources; available or expiring allowance is not evidence
+of value. Spending permission and a budget ceiling do not prove correctness.
+
+Inspect the actual command, request or execution path and require:
+
+- **An outcome test defined before execution.** Name the useful deliverable,
+  known expected examples, exclusions and failure conditions. Check semantics,
+  not merely HTTP success, schema validity, row counts or a green test suite.
+  For data selections, inspect filters, ordering, date and tenant scope,
+  limits, pagination and truncation before accepting a claim such as "all
+  affected records" or "complete coverage". Missing expected examples must be explained
+  from evidence, not silently filtered away.
+- **A bounded representative canary.** Use the actual execution path and
+  material parameters, including downstream transformations and destination
+  behavior; reduce only scope or volume. Establish its maximum resource use,
+  including retries and third-party rate limits, before running it. Agents
+  have no production access, so the canary runs locally against the local
+  database and Azurite with QA-shaped data, as a single-item run of the GitHub
+  Actions release workflow, or against a third-party sandbox; name which. A
+  mock or a different endpoint cannot prove the live method's semantics.
+  Where tenants, environments, modes or other branches materially differ, bound the proof
+  for each unproven branch before expanding it; do not extrapolate blindly.
+- **Direct inspection of the result.** Open the raw output and the transformed
+  deliverable or resulting state. Trace representative inputs through to what
+  the owner or downstream consumer actually receives. The challenger must
+  inspect evidence used to clear expansion, not accept another agent's summary
+  or "canary passed" assertion. Do not rerun merely to reproduce adequate
+  existing evidence of the same material behavior.
+- **A real stop before expansion.** Identify who inspects the canary and who
+  releases the larger run, with evidence recorded in the existing work record.
+  The execution sequence must halt before further batches or fan-out until
+  that review passes. A canary launched alongside the bulk work, an
+  automatically continuing loop, or a check performed after the full run
+  is not a gate. Bound total exposure across batches, retries and dependent
+  work, not just one request.
+
+Missing or inadequate proof is a **blocking finding for expansion**, even when
+ordinary review approved the plan or the owner approved the budget. Cite the
+actual proposed operation, unproven assumption and reachable waste or harm;
+do not demand proof for unrelated hypothetical operations. Failed or ambiguous
+canary results stop expansion and dependent work. Correct the
+method and repeat only the affected bounded proof. Material changes to request
+semantics, execution path or downstream consumption invalidate the affected
+proof; bookkeeping changes do not.
+
+If the canary cannot exist until tooling is implemented, ADR may clear the
+explicit preparation/canary milestone while leaving bulk execution held. The
+receipt and table must state that boundary, the evidence required and the
+existing review seat that will release expansion. Do not issue an unqualified
+whole-plan clearance with "validate later" as residual risk. This staging does
+not reduce owner scope or grant spending, production or deployment authority;
+the challenger must not run a costly or state-changing operation to obtain
+missing evidence.
+
+For example, a backfill that reports "50,000 rows updated" has not shown it
+updated the right rows correctly. Require the canary's before-and-after rows
+for known cases, including one that must not change, to be inspected before
+the full backfill runs.
 
 ### 8. Operational Viability
 
@@ -367,8 +463,12 @@ The artifact ends with exactly one verdict:
 
 For `clear`, record the exact plan source, version, reproducible identity,
 ordinary review artifact, important inspected surfaces, challenge lenses used,
-zero open blocking findings, and any bounded residual risk. “Looks good” is not
-a receipt.
+zero open blocking findings within the cleared scope, and any bounded residual
+risk. For consequential operations, record the canary evidence actually
+inspected, pass/fail checks, resource bounds and exact expansion scope released
+or still held. If only preparation/canary work is clear, name that limitation
+in both the verdict and table; bulk work remains held. “Looks good” is not a
+receipt.
 
 For `changes requested`, the planner revises the same canonical plan. The
 ordinary plan reviewer performs a focused re-review of changed and affected
@@ -401,6 +501,7 @@ Use this outline:
 ## Second- and third-order trace
 ## Technical-design challenge
 ## Evidence-quality assessment
+## Proof before scale (when applicable: inspected evidence, limits, release or hold)
 ## Findings
 ## Ordinary-review comparison
 ## Residual risk

@@ -435,3 +435,10 @@ as independent reviewer, on the exact same table. When you join a table
 created by `$rally`, everything in this doc still applies; you simply run
 `rally_claude.py` instead of `rally.py`, and any Codex participant already
 seated keeps using its own script unchanged.
+
+Notifications do not cross harnesses. `SendMessage` reaches only Claude Code
+sessions, and Codex's `codex queue` reaches only Codex sessions. When you hand
+the turn to a Codex seat, complete the handoff as usual, then tell the owner
+which Codex session to prompt to check the table; do not mark the notification
+`queued`, record it with `notify-sent --status uncertain --error 'cross-harness:
+owner relays'`.
