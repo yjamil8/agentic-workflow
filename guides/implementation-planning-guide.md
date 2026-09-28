@@ -254,7 +254,8 @@ approval.
 ### Required updates
 
 The documentation and process obligations your team attaches to certain
-changes: the tracking ticket, runbooks and on-call docs, user-facing docs or
+changes: the tracking ticket, runbooks in `runbooks/` (created when the
+change adds a repeatable procedure), user-facing docs or
 release notes, API documentation, dashboards and alerts, and the team's agent
 instructions when the workflow itself changes. List only the ones this change
 triggers, so the reviewer can check them off.

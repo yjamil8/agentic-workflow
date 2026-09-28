@@ -17,6 +17,9 @@ to whatever repo you drop this into.
 Code (`~/.claude/CLAUDE.md`) and Codex (`~/.codex/AGENTS.md`), so these rules
 apply in every repository you work in, not only this toolkit checkout.
 
+- This toolkit repository is public. Never commit employer code, data,
+  names, plans, tables, runbooks, or anything learned about a work system to
+  it; that material lives only in the work repositories.
 - "Owner" in these rules means the human directing the agents, who sets
   scope and gives approvals. It does not mean a code owner or product owner.
 - A repository's own `AGENTS.md`/`CLAUDE.md`, and your team's written
@@ -223,10 +226,11 @@ Every new feature flag must be enabled in the normal local development lane whil
 
 - Never use em dashes (Unicode U+2014) anywhere, including UI copy, prompts, documentation, tests, code comments, or agent-authored text. Use a hyphen or rewrite the sentence.
 
-## Ops Book Discipline
+## Runbooks
 
-- If a workflow needs a reusable operational runbook, ask the user whether it should be persisted as a dedicated ops-book plan (pick a stable location, e.g. `ops_book/` or `docs/runbooks/`, and record it here once you have one).
-- Ops book plans must be pristine, well thought out, production-ready, and maintained when stale; do not treat them as scratch notes or partial implementation plans.
+- No runbooks exist yet. Do not assume one exists, search for one, or treat a missing runbook as a blocker; inspect the code, configuration, and pipeline definitions (for example the GitHub Actions workflows) directly.
+- When the owner and agents repeat a procedure (a content release, local database and Azurite setup, a QA read query, a third-party change), propose a runbook for it. Create it only when the owner agrees, at `<work-repo-root>/runbooks/<topic>.md`, which `scripts/init-work-repo.sh` keeps out of team commits like `agent_tables/`.
+- A runbook must be correct, complete, and runnable by someone new, and kept current when the procedure changes. It is not scratch notes or a partial plan.
 
 ## Implementation Plans
 

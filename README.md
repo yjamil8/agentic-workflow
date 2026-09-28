@@ -80,16 +80,17 @@ take precedence over this toolkit wherever they conflict.
 
 ## Prepare each work repo
 
-Agent Tables and plans live inside the work repo, at `agent_tables/` and
-`implementation_plans/`. Run this once per clone:
+Agent Tables, plans, and runbooks live inside the work repo, at
+`agent_tables/`, `implementation_plans/`, and `runbooks/`. Never put them in
+this toolkit repo, which is public. Run this once per clone:
 
 ```bash
 ~/agentic-workflow/scripts/init-work-repo.sh /path/to/work-repo
 ```
 
-It creates both directories and lists them in that clone's
+It creates all three directories and lists them in that clone's
 `.git/info/exclude`, which is local and never committed, so they will not
-appear in `git status` or reach a team PR. Remove those two lines if your team
+appear in `git status` or reach a team PR. Remove those lines if your team
 decides to commit them.
 
 To read plans in the viewer, from the work repo's root:

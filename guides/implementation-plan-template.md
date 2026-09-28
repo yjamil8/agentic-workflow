@@ -193,7 +193,8 @@ section otherwise.>
 rules. Delete this section otherwise.>
 
 - Tracking ticket status and next action.
-- Runbooks and on-call documentation.
+- Runbooks in `runbooks/`: create or update one when this change adds or
+  alters a repeatable procedure.
 - User-facing documentation, help content, or release notes.
 - API documentation or published contracts.
 - Dashboards and alerts.
