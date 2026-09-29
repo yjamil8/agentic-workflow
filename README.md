@@ -55,7 +55,9 @@ Tested with Claude Code 2.1.283 and codex-cli 0.157.1 on Linux/WSL.
   Enterprise: `gh auth login --hostname <your-ghe-host>`. The Claude reviewer
   also uses a GitHub MCP server when one is configured, and falls back to
   `gh` otherwise.
-- On Windows, run everything from WSL or Git Bash.
+- On Windows, run Claude Code, Codex, and this toolkit inside WSL2. The
+  agent-table helpers use Unix file locking (`fcntl`) and `os.getuid()`, so
+  they do not run on native Windows Python, including from Git Bash.
 
 ## Set up a work machine
 
