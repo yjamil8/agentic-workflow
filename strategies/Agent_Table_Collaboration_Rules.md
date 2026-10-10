@@ -805,10 +805,10 @@ table's work in the same session: confirm the worktree's commit is contained
 in the merged target or identify the exact merged pull request, check for
 uncommitted, staged, untracked, or unrecognized ignored changes before
 removing anything, then remove the worktree and run `git worktree prune` in
-the owning repository. Follow the repository's applicable `AGENTS.md`/
-the repository instruction file (`AGENTS.md` / `CLAUDE.md`) worktree-removal
-safety checks in full; do not skip them just
-because the table shows the candidate approved and merged. Do not leave a
+the owning repository. Follow the worktree-removal safety checks in the
+repository's own instructions and the Collaboration Rules in
+[Workspace_Operations.md](Workspace_Operations.md#collaboration-rules) in full;
+do not skip them just because the table shows the candidate approved and merged. Do not leave a
 merged worktree and its duplicated build caches or dependencies on disk
 merely for convenience.
 
@@ -831,7 +831,10 @@ The code reviewer checks:
 - whether any code change invalidated an earlier plan assumption
 
 Findings use stable IDs such as `CR-001`. Each finding identifies severity,
-blocking status, file and line or component, rationale, and required proof.
+blocking status, file and line or component, the specific failure, the affected
+invariant or users, and required proof. A blocking finding also names its causal
+link to a named operation and the smallest operation that must stop, under
+Review Findings And Responses below.
 An `approved` verdict requires the Approval Receipt below.
 
 Approval is bound to the exact candidate refs in `TABLE.md`. A later product
@@ -927,6 +930,14 @@ contradiction and its owner so dependent work cannot treat it as settled.
 ## Review Findings And Responses
 
 Review artifacts should be concise, durable, and independently understandable.
+
+A finding records stable ID (`PR-001`, `CR-001` or `QA-001`), severity, blocking
+status, exact location, specific failure, affected invariant or users, causal
+link to a named operation and required closure proof. Apply AGENTS.md rules 6
+and 7: a blocking finding names the smallest operation that must stop, severity
+alone never blocks, and a reviewer's suggested gate is not owner authority.
+State nonblocking advice separately.
+
 Use this shape:
 
 ```markdown
@@ -945,7 +956,9 @@ Use this shape:
 
 - Location: `<file>:<line>`
 - Finding: <specific problem>
-- Why it matters: <consequence>
+- Affected: <invariant, users, or data>
+- Causal link: <why this blocks the named operation or acceptance gate>
+- Blocked operation: <smallest operation that must stop>
 - Required proof: <change, test, or evidence required>
 
 ## Non-blocking observations
@@ -1318,6 +1331,9 @@ chooses one of these:
   in standby and the current seat hands off to that role
 - start a new table that links the old table's plan, reviews and candidate as
   its starting context
+
+If the lost seat holds the current turn, only the first and last options
+apply.
 
 A replacement under a new role name needs the owner's explicit appointment,
 recorded in the table, and keeps the independence rules: it cannot review work
