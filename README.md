@@ -24,6 +24,11 @@ layout. `CLAUDE.md` imports it, so Claude Code and Codex read the same rules.
   an independent challenge between plan approval and implementation. A
   separate session reconstructs the problem blind, then tests the approved
   plan for necessity, user impact, downstream effects, and technical design.
+- **Optional planning seats** ([strategies/Agent_CoPlanner.md](strategies/Agent_CoPlanner.md),
+  [strategies/Agent_EvidenceExperimentLead.md](strategies/Agent_EvidenceExperimentLead.md)):
+  a co-planner for strategy and alternatives, and an evidence lead for
+  research methods, bounded canaries and outcome measurement. Neither adds an
+  approval gate.
 - **PR review** ([agents/pr-review-specialist.md](agents/pr-review-specialist.md) for
   Claude Code, [codex_skills/pr-review](codex_skills/pr-review) for Codex):
   line-by-line GitHub PR review, submitted as one review with inline comments
@@ -40,9 +45,12 @@ layout. `CLAUDE.md` imports it, so Claude Code and Codex read the same rules.
   `/feature-discovery` investigates a feature and produces a proposal, a
   feature plan, and paste-ready user stories; `/story-delivery` takes one
   story through plan, implementation, review, and pull request.
-- **Engineering rules in AGENTS.md**: scope and planning discipline, feature
-  flag wiring, test double fidelity, source-of-truth fixes, worktree hygiene,
-  and similar rules drawn from real defects.
+- **Engineering rules**: `AGENTS.md` holds authority, planning and safety
+  rules plus a routing table; `strategies/Workspace_Operations.md` holds the
+  detail it routes to (worktree hygiene, data access, feature flag wiring,
+  test double fidelity, source-of-truth fixes and similar rules drawn from
+  real defects). `scripts/check-workflow-instructions.py` keeps `AGENTS.md`
+  inside Codex's instruction size limit.
 
 ## Requirements
 

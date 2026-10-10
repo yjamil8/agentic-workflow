@@ -124,10 +124,10 @@ def change(args, state, path):
             raise ValueError("Pass the exact invited --session name to bind your own UUID")
         state["participants"][args.role] = seat or {"session": args.session or thread, "thread_id": thread}
         state["participants"][args.role]["thread_id"] = thread
-        if state["current_role"] != args.role:
-            return "standby"
         if state["state"] in ("paused", "complete"):
             return state["state"]
+        if state["current_role"] != args.role:
+            return "standby"
         if state["claim"]:
             return "resumed" if args.resume else "already_claimed"
         state.update(state="working", claim=thread)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import html
 import re
+import urllib.parse
 from dataclasses import dataclass, field
 
 
@@ -32,7 +33,7 @@ def slugify(text: str) -> str:
 
 
 def render_inline(text: str) -> str:
-    text = html.escape(text, quote=False)
+    text = html.escape(text, quote=True)
 
     def code_sub(m: re.Match) -> str:
         return f"<code>{m.group(1)}</code>"
@@ -45,7 +46,21 @@ def render_inline(text: str) -> str:
         return f"\x00{len(placeholders) - 1}\x00"
 
     text = INLINE_CODE_RE.sub(stash_code, text)
-    text = LINK_RE.sub(lambda m: f'<a href="{m.group(2)}">{m.group(1)}</a>', text)
+    def safe_link(m: re.Match) -> str:
+        # Only web links and same-site or relative paths become anchors; any
+        # other scheme (javascript:, data:, file:) renders as plain text.
+        target = html.unescape(m.group(2)).strip()
+        try:
+            parsed = urllib.parse.urlsplit(target)
+        except ValueError:
+            return m.group(1)
+        safe = ((parsed.scheme in ("https", "http") and bool(parsed.netloc)) or
+                (not parsed.scheme and not target.startswith("//")))
+        if not safe or any(ord(ch) < 32 for ch in target) or "\\" in target:
+            return m.group(1)
+        return f'<a href="{html.escape(target, quote=True)}" rel="noreferrer">{m.group(1)}</a>'
+
+    text = LINK_RE.sub(safe_link, text)
     text = BOLD_RE.sub(lambda m: f"<strong>{m.group(1)}</strong>", text)
     text = ITALIC_RE.sub(lambda m: f"<em>{m.group(1)}</em>", text)
 

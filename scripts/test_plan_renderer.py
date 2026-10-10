@@ -35,6 +35,21 @@ class PlanRendererTests(unittest.TestCase):
         self.assertIn('class="decision"', html)
         self.assertIn('class="rec"', html)
 
+    def test_script_link_target_is_not_rendered_as_href(self):
+        html = self.render("# T\n\n## A\n\nSee [x](javascript:alert(1)) and [y](data:text/html,hi).\n")
+        self.assertNotIn("javascript:", html.split("<body")[-1].split("<script")[0])
+        self.assertNotIn('href="data:', html)
+
+    def test_safe_link_targets_render(self):
+        html = self.render("# T\n\n## A\n\n[web](https://example.com/a?b=1&c=2) [here](#a) [rel](../reviews/r.md)\n")
+        self.assertIn('href="https://example.com/a?b=1&amp;c=2"', html)
+        self.assertIn('href="#a"', html)
+        self.assertIn('href="../reviews/r.md"', html)
+
+    def test_link_target_quote_cannot_break_attribute(self):
+        html = self.render('# T\n\n## A\n\n[x](https://example.com/"onmouseover="alert(1))\n')
+        self.assertNotIn('"onmouseover="', html)
+
 
 if __name__ == "__main__":
     unittest.main()

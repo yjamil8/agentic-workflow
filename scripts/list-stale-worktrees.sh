@@ -6,14 +6,15 @@ set -euo pipefail
 # in the repo's origin/main (or $DEFAULT_BRANCH), and the worktree (plus any
 # nested repo inside it) has no uncommitted or untracked changes.
 #
-# WHY THIS EXISTS: AGENTS.md already requires removing a workstream's
+# WHY THIS EXISTS: the toolkit's Collaboration Rules already require removing a workstream's
 # worktrees in the same session a PR merges, but that step is purely
 # self-reported -- nothing lets anyone check later whether it actually
 # happened. This script makes that state observable on demand instead of
 # relying on the merging agent's memory.
 #
 # This script only REPORTS. It never removes anything. Removal still follows
-# the full work-loss-prevention checklist in AGENTS.md's Collaboration Rules
+# the full work-loss-prevention checklist in the Collaboration Rules of
+# strategies/Workspace_Operations.md
 # (prove containment in origin/main, check nested repos, grep for inbound
 # path references before trusting a worktree's *path* is unneeded, etc).
 #
@@ -101,8 +102,8 @@ done
 echo
 echo "SAFE TO REMOVE proves the worktree's CONTENT is not needed (merged, clean)."
 echo "It does not prove the PATH is unneeded: relative references from other"
-echo "worktrees can still resolve through it (see AGENTS.md's Collaboration"
-echo "Rules note on this, and add a note here for any repo in your workspace"
+echo "worktrees can still resolve through it (see the Collaboration Rules in"
+echo "strategies/Workspace_Operations.md, and add a note here for any repo in your workspace"
 echo "with the same nested-reference hazard). Grep the workspace for inbound"
 echo "references before removing, and follow the full checklist there, not"
 echo "just this script."

@@ -244,8 +244,11 @@ or current review evidence where applicable.
 
 ## Gate status
 
-- Plan review: approved for `v2` at plan commit `<40-character SHA>`
-- Adversarial plan challenge: clear for `v2` at plan commit `<40-character SHA>`
+- Plan review: approved for `v2` at plan commit `<40-character SHA>`;
+  [review](reviews/2026-09-04-plan-review-v2-r02.md); released: implementation;
+  next: plan challenger
+- Adversarial plan challenge: clear for `v2` at plan commit `<40-character SHA>`;
+  [review](reviews/2026-09-04-adversarial-review-v2-r01.md); next: coder
 - Code review: changes requested for candidate refs above
 - QA: waiting
 - Deployment readiness: waiting
@@ -295,7 +298,7 @@ whichever is last for that table's scope, never the coder or planner), runs
 [list-stale-worktrees.sh](../scripts/list-stale-worktrees.sh) for every
 worktree the table used and records in the completion artifact that each one
 is already removed or still needed and why, per the worktree cleanup rules in
-`AGENTS.md`'s Collaboration Rules. This confirms the coder's own per-round
+the Collaboration Rules in [Workspace_Operations.md](Workspace_Operations.md#collaboration-rules). This confirms the coder's own per-round
 cleanup duty (see Coder, below) actually happened rather than duplicating it.
 A table is not complete while it leaves a merged worktree registered with no
 recorded cleanup check.
@@ -541,6 +544,57 @@ Material conclusions, findings, scope changes, assumptions, test results, and
 unresolved questions must be recorded in artifacts before the turn changes.
 An agent may not leave essential information only in its chat response.
 
+### Complete Context And Proportional Handoffs
+
+Assume the receiving session lacks the owner's chat history. The coordinating
+seat checks owner instructions and underlying evidence, then records the problem,
+desired behavior, scope/exclusions, decisions, source refs, known gaps, acceptance
+checks, sequence and next actor in the existing assignment or linked artifact.
+Separate verified facts, proposals and unknowns. Check links and versions before
+handoff. Recipients request missing context directly from the sender.
+
+A status update does not transfer the turn. An unresolved finding can be submitted
+for assessment with exact source, available evidence and the requested decision;
+do not demand a packet label or additional document when those suffice. End a
+bounded investigation with a demonstrated fix, evidenced harness issue, residual
+risk for authorized acceptance, or precise blocker and next actor. Later success
+does not prove an earlier failure fixed; useful evidence exhausted is not a reason
+for indefinite retesting. Send recorded decisions to the responsible peer once;
+an owner-facing reply alone does not notify it.
+
+### Additional Commissioned Work
+
+Inspect newly commissioned scope and add a milestone to the canonical plan or a
+separate plan when its independence, dependencies or risk justify one. A message
+or work-order brief is not plan approval. Preserve owner ordering such as "after
+current work". Obtain ordinary and adversarial review of the affected scope before
+implementation unless the owner explicitly waives the relevant gate. Unchanged
+approved work continues; an in-scope defect fix is not automatically a new plan.
+
+### Contradiction Circuit Breaker
+
+At the second unexplained reversal of the same decision, stop mutations of the
+affected scope. Re-read the table and latest direct owner instructions; message
+arrival order or a peer's "final owner steering" label proves neither authority
+nor recency. A clear owner instruction resolves the conflict once and invalidates
+the stale turn. Otherwise the current seat pauses that scope and reports the
+conflicting choices, actual file hashes and side effects already performed. A
+reviewer observing the oscillation sends one stop notice to the current seat.
+Preserve bytes and hashes, do not alternate files or reciprocal correction
+handoffs, and resume disputed work only after owner resolution.
+
+### Out-Of-Scope Defects
+
+Apply the causal-blocker and out-of-scope defect rules in
+[AGENTS.md](../AGENTS.md) (rules 6 and 7). Discovery authorizes only the
+observation needed to classify the defect and write its tracker ticket, not
+sibling scans, a new plan, review rounds or repair. Notify the owner once.
+Record the affected system, evidence, severity rationale, responsible owner,
+concrete next action and whether a named operation is blocked. Keep unrelated
+repair outside this table's plan, gates and assignments. Severity alone and
+agent-written generic gates create no authority. Contain a concrete unsafe
+operation under its existing runbook and continue unaffected work.
+
 ### No Self-Approval
 
 The agent that authored a plan cannot approve the plan. The agent that wrote or
@@ -606,6 +660,21 @@ seat. It returns substantive evidence and a recommendation, not an approval.
 A session that materially co-authored the candidate cannot serve as its
 independent ordinary reviewer or plan challenger.
 
+### Evidence And Experiment Lead (Optional)
+
+The owner may appoint an existing session as `evidence_lead`. Follow
+[Agent_EvidenceExperimentLead.md](Agent_EvidenceExperimentLead.md). It owns the
+assigned evidence method, bounded canary, reproducible result and outcome
+readout. The planner owns integration and remains responsible when the seat
+is absent; the optional co-planner owns assigned strategy and alternatives.
+
+Record the evidence question, inputs, applicable resource bound, return seat
+and existing reviewer/releasing seat in the current assignment. Use normal
+agent-table registration, standby, claims and handoffs. The author cannot
+independently approve its own method or release costly or bulk expansion. This
+role creates no new approval gate, standing spending permission, concurrent
+turn or automatic agent.
+
 ### Plan Reviewer
 
 The plan reviewer independently checks whether the plan is implementable,
@@ -634,6 +703,9 @@ The plan reviewer must:
   the change as pure implementation mechanics
 - explicitly approve its visible scope and design under the UI presentation
   approval gate, or return the missing design decisions as findings
+- apply AGENTS.md rules 6 and 7: a blocking finding names the causal link and
+  the smallest operation that must stop; an unrelated real defect goes to
+  Out-Of-Scope Defects, not this plan's gates
 - assign stable finding IDs such as `PR-001`
 - state what evidence would close each blocking finding
 - produce one review artifact for the round
@@ -664,13 +736,16 @@ role owns the turn. Standby means no substantive review, no early reading of
 the ordinary review's reasoning, and no polling. The reviewer handoff and agent-table
 notification cause it to re-read the table, claim the current turn, and begin.
 
-The challenger starts blind to the ordinary review's reasoning. It first
+The challenger starts blind to the ordinary review's reasoning. It confirms
+approval from the table's compact gate metadata (verdict, exact plan identity,
+review link, released/held scope and next actor) without opening the ordinary
+review or its receipt. It first
 reconstructs the owner outcome, actual customer and system journey, affected
 inventory and consumers, existing mechanisms, smaller alternatives, important
 assumptions, and second- and third-order effects from the owner request, exact
 plan, inspected source, and rendered/runtime evidence. It then reads the
-ordinary review to detect shared framing errors without duplicating resolved
-findings.
+ordinary review, including its actual approval receipt, to detect shared framing
+errors without duplicating resolved findings.
 
 The challenger writes one dated adversarial review artifact with stable
 `APR-###` findings and returns exactly one verdict:
@@ -681,7 +756,9 @@ The challenger writes one dated adversarial review artifact with stable
 
 A blocking finding needs a concrete reachable failure or violated owner
 requirement, affected users/data/invariant, traceable evidence, and closure
-proof. There is no finding quota. The challenger is read-only with respect to
+proof, including the causal link to a named table operation and the smallest
+scope that must stop. An unrelated real defect is reported and tracked under
+Out-Of-Scope Defects; it is not an adversarial gate. There is no finding quota. The challenger is read-only with respect to
 the plan and product code and does not replace ordinary plan approval or a
 domain specialist.
 
@@ -698,15 +775,14 @@ challenge is clear for the same exact plan identity or that the table records
 the owner's valid advance `NO ADR`/`NO_ADR` waiver. The coder must preserve
 unrelated existing changes and obey all repository-specific instructions.
 
-Implement the full approved plan end to end, including every milestone in it,
-and complete its local verification before handing off. Do not hand off one
-step, file, or milestone at a time, and do not treat a milestone inside the
-plan as its own handoff checkpoint. The plan was written in meticulous detail
-precisely so the coder can execute it in one pass; splitting that into a
-sequence of review round-trips defeats the purpose of planning it that way.
-Hand back early only for a genuine blocker, missing information, a real owner
-decision, or a material departure from the approved plan, never to checkpoint
-routine progress.
+Carry the full authorized plan through implementation and applicable verification.
+Consolidate routine changes rather than handing off each file or untested slice.
+An approved plan may define a meaningful integration checkpoint, independently
+shippable repair or a canary that the existing reviewer must inspect before
+consequential expansion. Those checkpoints are executable handoffs, not permission
+to omit later milestones. A milestone alone creates no new seat, PR, worktree or
+approval layer. Surface a genuine blocker, owner choice or material plan departure
+while continuing unaffected work.
 
 The coder owns:
 
@@ -896,8 +972,11 @@ Completed review artifacts are immutable. Re-review creates a new round file.
 
 A plan or code review's `approved` verdict includes one compact `Approval
 receipt` in the same review artifact, not a bare approval sentence or a link
-to evidence. When the disposition is `approved`, show the same receipt in
-`Latest handoff summary` and any owner-facing result.
+to evidence. Keep that receipt authoritative in the dated review. `TABLE.md` and
+the owner notification carry only the verdict, exact identity, review link,
+released/held scope and next actor. Do not copy the receipt or review reasoning
+into either. This also lets the plan challenger read approval metadata without
+absorbing the ordinary reviewer's reasoning before its independent pass.
 
 Build the receipt from the actual scope instead of a fixed universal
 checklist. It contains:
@@ -990,9 +1069,24 @@ there. A long, expensive review that still finds its defect late is a
 sequencing failure, not proof the floor was met: front-load cheap structural or
 shape checks, such as whether inputs match the expected shape or a fixture
 behaves like the real dependency it replaces, before spending on expensive
-semantic review of a high-risk path. Do not add turns, rounds, or reviewer
-seats merely to look thorough; that is not the same as meeting the floor
-above.
+semantic review of a high-risk path. Once the candidate is eligible, inspect
+the actual artifact against the core outcome or semantic invariant before
+exhaustive hashes, builds or reconciliations. Structural-first is a fail-fast
+optimization, not permission to defer the outcome-defining check. A passing
+schema, count, mapping, round trip or hash does not establish semantic
+correctness.
+
+When one finding demonstrates a defect class, the reviewer scans the complete
+reachable affected cohort in the same round before handoff and records the
+denominator inspected. Do not return a few examples as though they bound the
+class, then discover another instance in each re-review. If the cohort cannot
+be completed, state the exact unreviewed scope and resulting blocker. After a
+correction, keep re-review focused on changed affected instances and
+mechanically rebuilt identities when the rest of the candidate is unchanged.
+
+Do not add turns, rounds, or reviewer seats merely to look thorough; that is
+not the same as meeting the floor above.
+
 ## Candidate Identity
 
 Every approval and QA result must identify exactly what was evaluated.
@@ -1050,9 +1144,10 @@ the table, may skip this stage.
 
 ### 5. Implement
 
-The coder implements the full approved plan in one pass, verifies locally,
-records exact candidate refs, and hands the turn to the code reviewer. It does
-not hand off after an intermediate, untested slice.
+The coder completes the authorized plan and its verification, respecting any
+approved integration or canary checkpoint, records exact candidate refs, and
+hands the turn to the code reviewer. It does not hand off an intermediate,
+untested slice.
 
 ### 6. Review The Code
 
@@ -1199,20 +1294,35 @@ main gate or edit the implementation.
 
 ### Agent Becomes Unavailable
 
-The owner may assign a new chat to the same seat. Record the explicit replacement,
-update the session binding, invalidate the old claim by incrementing the turn,
-and notify the replacement. The replacement reads the table and relevant
-artifacts, not a chat transcript. Do not silently steal an occupied seat.
+First distinguish an offline session from a different identity. Claims and
+seats bind to the session UUID.
 
-### A Returning Seat Keeps Its Name But Not Its Claim
+- **Same session reopened.** Reopening the same UUID (the CLI form
+  `claude --resume <uuid>`, or Codex resume) keeps the binding and any existing
+  claim. Use `join --resume` only to continue that session's own claimed turn
+  under current authority, never in response to a notification. An in-app
+  `/resume` can leave the session on its launch UUID, so use the CLI form.
+- **Unbound seat.** An owner-assigned seat that has not joined yet uses an
+  ordinary join with the exact invited session name.
+- **New UUID in an occupied seat.** The helpers refuse the join ("Role is bound
+  to a different session"). `--thread` passes only your own verified UUID; it
+  is never a way to act as another seat. Nobody edits the helper-managed block
+  by hand, and pause plus resume does not rebind a seat.
 
-A restarted or reconnected seat returns under the same name with a new session
-identity. Claims bind to the identity, so it can look present and reachable while
-being unable to take the turn it held.
+The helpers have no seat-replacement command yet. Until one exists, the owner
+chooses one of these:
 
-The seat not holding the turn invalidates the stale claim by advancing the turn,
-then reissues with the new number. Do not resume the old turn. Restart before a
-turn is claimed where the choice exists.
+- reopen the original session by its UUID
+- when the unavailable seat does not hold the turn, appoint a replacement
+  session under a distinct role name (for example `code_reviewer_2`); it joins
+  in standby and the current seat hands off to that role
+- start a new table that links the old table's plan, reviews and candidate as
+  its starting context
+
+A replacement under a new role name needs the owner's explicit appointment,
+recorded in the table, and keeps the independence rules: it cannot review work
+it authored.
+
 ### Follow-Up Work Arrives After A Table Is Complete
 
 A completed table cannot be reopened and should not be. Do not manufacture a pause

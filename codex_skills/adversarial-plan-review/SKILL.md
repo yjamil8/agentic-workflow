@@ -64,8 +64,11 @@ review a nearby/latest plan.
 ## Run the blind-first challenge
 
 Do not read the ordinary review's reasoning before completing the independent
-model. It is permissible to inspect only enough of its metadata to establish
-that an approval exists and which exact plan it binds.
+model. Use the table's compact gate metadata: verdict, exact plan identity,
+review link, released/held scope and next actor. Do not open the full review or
+its receipt merely to find this metadata. If missing, request a metadata-only
+handoff from the responsible reviewer. After the independent model, open the
+linked immutable review and verify its actual receipt before issuing a verdict.
 
 Follow the agent contract's four passes:
 
@@ -92,6 +95,13 @@ Follow the agent contract's four passes:
    Apply the contract's research-selection, causal-scope and outcome-measure
    checks where relevant. A transparent evidence gap is still unfinished work;
    distinguish a scoped technical clear from the owner outcome being achieved.
+   Apply the causal-blocker test to every proposed gate: name the reviewed
+   outcome or acceptance gate, concrete failure, causal link, affected users or
+   invariant, and smallest operation that must stop. Severity and generic `no
+   open defects` conditions do not supply that link. For a real defect outside
+   the plan, follow the table contract's Out-Of-Scope Defects rule: notify the
+   owner once, create or update one deduplicated tracker ticket with
+   evidence-based severity and next action, and do not reroute the parent plan.
 3. Read the ordinary review. Remove resolved duplicates and identify claims it
    could not actually prove.
 4. Write one bounded artifact and issue `clear`, `changes requested`, or
@@ -140,7 +150,9 @@ Route through agent-table:
 After plan changes, require the ordinary reviewer to perform the focused
 re-review first, then perform a focused closure review. Preserve finding IDs.
 Do not add a review of the challenger, restart unrelated approvals, or create
-approval-record-only commits.
+approval-record-only commits. Recheck that each open finding still belongs to
+the reviewed plan and blocks a named operation; do not retain an invalid gate
+because an earlier review or owner-decision request recorded it.
 
 This review grants no authority to implement, merge, release data or content, write to
 production, or deploy.

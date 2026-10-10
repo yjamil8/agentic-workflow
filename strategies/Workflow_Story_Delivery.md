@@ -107,7 +107,8 @@ asked). The final handoff gives the owner:
 - any follow-up the feature plan needs (a discovered requirement, a changed
   assumption), which goes back to the owner rather than into this story
 
-Then clean up the worktree per `AGENTS.md`.
+Then clean up the worktree per the Collaboration Rules in
+[Workspace_Operations.md](Workspace_Operations.md#collaboration-rules).
 
 ## Starting it
 

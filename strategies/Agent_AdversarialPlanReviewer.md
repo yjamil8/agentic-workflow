@@ -127,9 +127,13 @@ reviewer to the same framing.
 
 ### Pass 1: Reconstruct The Problem Without The Approval
 
-Read the owner request, applicable instructions, and exact plan. Do **not** read
-the ordinary review artifact yet beyond verifying that an approval exists and
-identifying the approved plan version.
+Read the owner request, applicable instructions, and exact plan. Verify approval
+existence and identity from compact table metadata: verdict, exact plan identity,
+review link, released/held scope and next actor. Do **not** open the ordinary
+review or its receipt before the independent pass. Missing metadata goes back
+to the responsible reviewer for a metadata-only handoff. In Pass 3, inspect the
+actual immutable approval receipt before deciding; table metadata is an entry
+check, not substitute evidence.
 
 Write a private working model of:
 
@@ -429,6 +433,8 @@ A blocking finding must include:
 - challenged plan section or decision
 - concrete failure or violated requirement
 - affected users, data, journey, or invariant
+- causal link to the reviewed owner outcome or acceptance gate
+- smallest named operation that must stop
 - reproduction, source trace, or other inspectable evidence
 - smallest acceptable resolution and evidence that would close it
 
@@ -442,6 +448,8 @@ Use this compact form:
 - Plan location: <section or line>
 - Failure: <what goes wrong>
 - Impact: <who or what is affected>
+- Causal link: <why this prevents the reviewed outcome or gate>
+- Blocked operation: <smallest operation that must stop>
 - Evidence: <source, journey, reproduction, or contract>
 - Required resolution: <smallest plan change or owner decision>
 - Closure evidence: <what the next review must inspect>
@@ -449,6 +457,10 @@ Use this compact form:
 
 Preferences, theoretical hardening, and unsupported speculation are
 nonblocking and should normally be omitted. Do not create a finding quota.
+Severity alone never makes a finding block the plan. A generic `no open
+defects` gate is invalid. Track a real out-of-scope defect under the table
+contract's Out-Of-Scope Defects rule and keep it out of the plan's gate path
+unless its causal link is proved.
 Do not hide a consequential finding in a general observation.
 
 ## Verdicts
@@ -474,11 +486,17 @@ For `changes requested`, the planner revises the same canonical plan. The
 ordinary plan reviewer performs a focused re-review of changed and affected
 claims, then the plan challenger performs a focused closure review of its own
 findings and any new consequences. Do not restart unrelated approvals or add a
-reviewer of the challenger.
+reviewer of the challenger. Closure must recheck whether the finding still
+belongs to this plan and still blocks a named operation; it must not preserve an
+invalid gate merely because an earlier review or owner-decision request recorded
+it.
 
 For `owner decision required`, state the exact decision, viable options,
 consequences, recommendation if supported, and the seat that resumes. Continue
-unaffected authorized work when the table can do so safely.
+unaffected authorized work when the table can do so safely. Do not ask the owner
+to decide whether an unrelated defect should remain a blocker; apply the causal
+standard, track the defect separately, and ask only if a real product or scope
+choice remains.
 
 ## Review Artifact
 

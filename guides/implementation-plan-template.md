@@ -97,7 +97,7 @@ regulated data are touched. Delete this section otherwise.>
 
 <When applicable: behavior is gated or configuration changes. Delete this
 section otherwise. Flag, compile-time or runtime, default per environment,
-every wiring surface from AGENTS.md "Feature Flag Wiring Discipline", and
+every wiring surface from [Feature Flag Wiring Discipline](../strategies/Workspace_Operations.md#feature-flag-wiring-discipline), and
 local-development parity.>
 
 ## UI presentation, exact approved scope
@@ -149,6 +149,13 @@ data, and configuration the commands need; never QA or a shared environment>.
 
 Third-party services: <sandbox or test account used; if a double stands in,
 how it matches the real service's responses and errors>.
+
+<For generated or materialized operational inputs: define the semantic oracle,
+the complete review denominator, and the final artifact the reviewer will read.
+Include a structurally valid but semantically wrong negative fixture and prove
+the regression fails on it before the fix. Source/output equality, schema
+validity, deterministic rebuilds, and matching hashes prove reproducibility,
+not correctness.>
 
 ## Rollback
 

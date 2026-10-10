@@ -76,6 +76,14 @@ class AgentTableTests(unittest.TestCase):
         self.assertEqual(self.state()["turn"], 1)
         self.assertEqual(self.state()["current_role"], "implementer")
 
+    def test_non_current_seat_joining_paused_or_complete_table_is_not_told_standby(self):
+        self.call("pause", *self.identity(), "--reason", "Owner says stop")
+        self.assertEqual(self.call("join", "--role", "qa", thread=C)["result"], "paused")
+        self.call("resume", *self.identity(), "--reason", "Owner explicitly resumed")
+        self.join()
+        self.advance("--complete")
+        self.assertEqual(self.call("join", "--role", "qa", thread=C)["result"], "complete")
+
     def test_wrong_generation_or_turn_cannot_bind_or_claim(self):
         before = self.table.read_bytes()
         for identity in (["--table-id", str(uuid.uuid4()), "--turn", "1"],

@@ -21,6 +21,10 @@ agents, a daemon, a watcher, a new approval process, or a second source of truth
   implementation plan or with a recorded owner ADR waiver. A non-waived plan
   needs three distinct sessions: planner/implementer, ordinary plan reviewer,
   and `plan_challenger`. Never approve or adversarially clear your own work.
+- Optional `co_planner` and `evidence_lead` seats follow their contracts
+  (`Agent_CoPlanner.md`, `Agent_EvidenceExperimentLead.md`) and add no
+  approval gate. They need the owner's appointment; never spawn or resume a
+  session merely to fill one.
 - Every implementation plan requires a separate adversarial plan challenge
   after ordinary plan approval unless the owner directly says `NO ADR` or
   `NO_ADR` in advance. Record that exact waiver and its scope in `TABLE.md`.
@@ -222,12 +226,17 @@ withdrawn, stop before another document, source, or table-state mutation.
   accessible in the shared workspace. Resolve material ambiguity from available
   evidence or ask the owner the specific missing question; do not export an
   unresolved choice as a supposed requirement or expect the owner to relay it.
+- An approval receipt stays in its dated review. The table and the
+  notification carry only the verdict, exact identity, review link,
+  released/held scope and next actor, so a plan challenger can confirm the
+  approval without reading the reviewer's reasoning first.
 - Send a short notification pointing to that complete assignment, not an
   ambiguous "do what we discussed" message or a dense queue-only substitute.
   The recipient checks scope and approval before implementation and requests
   missing context directly from the sender.
 - Before completing a turn that ran builds, tests, or dev servers, apply the
-  build-cache and worktree cleanup rules in `AGENTS.md`'s Collaboration Rules.
+  build-cache and worktree cleanup rules in the Collaboration Rules of
+  `<agentic-workflow-root>/strategies/Workspace_Operations.md`.
   Clean what you created or record its exact path, size, reason for deferral,
   and next cleanup actor; unexplained agent-created caches or worktrees make
   the handoff incomplete.
@@ -301,38 +310,19 @@ withdrawn, stop before another document, source, or table-state mutation.
   table/turn/claim and artifact checks; missing timestamps do not authorize work
   or require an ACK. No new replay ledger or polling service is needed.
 
-## A restarted chat loses its claim
+## A restarted chat or a lost seat
 
-`CODEX_THREAD_ID` changes when a chat is restarted. The seat comes back under the
-same name and is still addressable, but the table binds claims to the thread id,
-not the name. Two consequences:
+Seats and claims bind to the thread id. Follow "Agent Becomes Unavailable" in the
+[table contract](<agentic-workflow-root>/strategies/Agent_Table_Collaboration_Rules.md):
 
-- `registered()` no longer matches it, so it cannot `notify` until it re-joins.
-- `join` on the turn it was holding fails, because that turn is claimed by the
-  previous thread id. `join --resume` does not help: it continues *your own*
-  claimed turn, and this is a different identity.
-
-Recovery, run by the seat that is **not** holding the turn:
-
-```bash
-python3 <skill-dir>/scripts/agent_table.py pause --table ... --table-id ... --turn N \
-  --reason 'Seat restarted; clearing the stale claim from the prior thread id.'
-python3 <skill-dir>/scripts/agent_table.py resume --table ... --table-id ... --turn N+1 \
-  --reason '...'
-```
-
-`pause` and `resume` each advance the turn, so the reissued turn is `N+2`. Read
-it from the command output rather than assuming; then `notify` and tell the
-returning seat the new turn number explicitly, because it will otherwise try the
-old one. The returning seat `join`s the new turn, which rebinds its name to the
-new thread id and re-registers it.
-
-There is no `reclaim` command and none is wanted: `pause` plus `resume` already
-does this with existing machinery. Use the `--reason` string to record that it
-was a restart rather than an owner pause, so the table's history stays truthful.
-
-When a restart is planned rather than forced, do it before a turn is claimed.
-Restarting mid-turn always costs a reissue.
+- The same thread id reopened (CLI `claude --resume <uuid>`, or Codex resume)
+  keeps its seat; `join --resume` continues only its own claimed turn.
+- A different thread id cannot take an occupied seat: `join` refuses with "Role is
+  bound to a different session". Pause plus resume does not rebind it, and
+  the managed block is never edited by hand.
+- There is no replacement command yet. The owner reopens the original
+  session, appoints a replacement under a distinct role name when the lost
+  seat does not hold the turn, or starts a new table linking the old one.
 
 ## Follow-up after a table is complete
 

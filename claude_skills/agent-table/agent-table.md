@@ -53,6 +53,10 @@ during the turn, not only the final handoff notification.
   requested stops in the table.
 - Roles are owner-assigned, not a mandatory roster. Two agents often suffice:
   implementer/planner and independent reviewer. Never approve your own work.
+- Optional `co_planner` and `evidence_lead` seats follow their contracts
+  (`Agent_CoPlanner.md`, `Agent_EvidenceExperimentLead.md`) and add no
+  approval gate. They need the owner's appointment; never spawn or resume a
+  session merely to fill one.
 - Internal-facing copy and implementation, operational, QA, or agent
   instructions are banned from customer-facing UI. Reviewers must block any
   such exposure and require its removal before approval.
@@ -280,12 +284,17 @@ mutation.
   available evidence or ask the owner the specific missing question; do
   not export an unresolved choice as a supposed requirement or expect the
   owner to relay it.
+- An approval receipt stays in its dated review. The table and the
+  notification carry only the verdict, exact identity, review link,
+  released/held scope and next actor, so a plan challenger can confirm the
+  approval without reading the reviewer's reasoning first.
 - Send a short notification pointing to that complete assignment, not an
   ambiguous "do what we discussed" message or a dense table-only
   substitute. The recipient checks scope and approval before
   implementation and requests missing context directly from the sender.
 - Before completing a turn that ran builds, tests, or dev servers, apply the
-  build-cache and worktree cleanup rules in `AGENTS.md`'s Collaboration Rules.
+  build-cache and worktree cleanup rules in the Collaboration Rules of
+  `<agentic-workflow-root>/strategies/Workspace_Operations.md`.
   Clean what you created or record its exact path, size, reason for deferral,
   and next cleanup actor; unexplained agent-created caches or worktrees make
   the handoff incomplete.
@@ -354,36 +363,19 @@ mutation.
 - Keep the owner updated on outcomes and material scope increases. Direct
   continuation does not mean silent work or unlimited task expansion.
 
-## A restarted session loses its claim
+## A restarted session or a lost seat
 
-`CLAUDE_CODE_SESSION_ID` changes when a session is restarted. The seat comes back
-under the same `ListAgents` name and is addressable as before, but the table
-binds claims to the session id, not the name. Two consequences:
+Seats and claims bind to the session id. Follow "Agent Becomes Unavailable" in the
+[table contract](<agentic-workflow-root>/strategies/Agent_Table_Collaboration_Rules.md):
 
-- `registered()` no longer matches it, so it cannot `notify` until it re-joins.
-- `join` on the turn it was holding fails, because that turn is claimed by the
-  previous session id. `join --resume` does not help: it continues *your own*
-  claimed turn, and this is a different identity.
-
-Recovery, run by the seat that is **not** holding the turn:
-
-```bash
-python3 <skill-dir>/scripts/agent_table_claude.py pause --table ... --table-id ... --turn N   --reason 'Seat restarted; clearing the stale claim from the prior session id.'
-python3 <skill-dir>/scripts/agent_table_claude.py resume --table ... --table-id ... --turn N+1   --reason '...'
-```
-
-`pause` and `resume` each advance the turn, so the reissued turn is `N+2`. Read
-it from the command output rather than assuming; then `notify` and tell the
-returning seat the new turn number explicitly, because it will otherwise try the
-old one. The returning seat `join`s the new turn, which rebinds its name to the
-new session id and re-registers it.
-
-There is no `reclaim` command and none is wanted: `pause` plus `resume` already
-does this with existing machinery. Use the `--reason` string to record that it
-was a restart rather than an owner pause, so the table's history stays truthful.
-
-When a restart is planned rather than forced, do it before a turn is claimed.
-Restarting mid-turn always costs a reissue.
+- The same session id reopened (CLI `claude --resume <uuid>`, or Codex resume)
+  keeps its seat; `join --resume` continues only its own claimed turn.
+- A different session id cannot take an occupied seat: `join` refuses with "Role is
+  bound to a different session". Pause plus resume does not rebind it, and
+  the managed block is never edited by hand.
+- There is no replacement command yet. The owner reopens the original
+  session, appoints a replacement under a distinct role name when the lost
+  seat does not hold the turn, or starts a new table linking the old one.
 
 ## Follow-up after a table is complete
 

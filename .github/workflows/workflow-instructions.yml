@@ -1,0 +1,31 @@
+name: Workflow instructions
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  workflow-instructions:
+    name: workflow-instructions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test instruction checks
+        run: python3 -m unittest discover -s scripts/tests -p test_workflow_instructions.py
+      - name: Check root instruction routes
+        run: python3 scripts/check-workflow-instructions.py
+      - name: Test plan renderer
+        run: python3 -m unittest discover -s scripts -p test_plan_renderer.py
+      - name: Test agent-table helpers
+        run: |
+          python3 -m unittest discover -s codex_skills/agent-table/tests
+          python3 -m unittest discover -s claude_skills/agent-table/tests

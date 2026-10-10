@@ -134,7 +134,7 @@ Three parts that together prevent findings 1 and 2:
   the QA database (read-only, labeled as QA), and what the evidence rules out
   as well as what it shows. Production is not readable, so say what QA cannot
   tell you and design for that unknown, or name who can check it (see
-  `AGENTS.md` "Environments And Data Access").
+  `strategies/Workspace_Operations.md` "Environments And Data Access").
 - **Active clients and writers**: every reader and writer of the changed
   contract, including cached clients and deployed versions that will keep
   sending the old shape.
@@ -177,7 +177,7 @@ touches these and says nothing about them should not pass review.
 ### Feature flags and configuration
 
 Each flag, compile-time or runtime, default per environment, and every wiring
-surface in `AGENTS.md` "Feature Flag Wiring Discipline". Confirm local
+surface in `strategies/Workspace_Operations.md` "Feature Flag Wiring Discipline". Confirm local
 development enables it. Production enablement is often a separate owner
 decision; say so.
 
