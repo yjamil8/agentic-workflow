@@ -13,6 +13,7 @@ Usage:
 import argparse
 import json
 import os
+import shutil
 import sys
 import tempfile
 import time
@@ -46,6 +47,8 @@ def merge(current, profile, pins=None):
 
 
 def main(argv=None):
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(errors='replace')  # an ASCII-only console must not crash after the write
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--settings', required=True)
     ap.add_argument('--profile', required=True)
@@ -54,11 +57,11 @@ def main(argv=None):
     a = ap.parse_args(argv)
     try:
         pins = parse_pins(a.pin_models) if a.pin_models else None
-        with open(a.profile) as f:
+        with open(a.profile, encoding='utf-8') as f:
             profile = json.load(f)
         current = {}
         if os.path.exists(a.settings):
-            with open(a.settings) as f:
+            with open(a.settings, encoding='utf-8') as f:
                 current = json.load(f)
             if not isinstance(current, dict):
                 raise ValueError(f'{a.settings} is not a JSON object')
@@ -73,23 +76,32 @@ def main(argv=None):
         print(f'  {"would set" if a.dry_run else "set"} {key}: {old if old is not None else "(unset)"} -> {new}')
     if a.dry_run:
         return 0
-    folder = os.path.dirname(os.path.abspath(a.settings))
+    # Write through a symlink (for example into a dotfiles checkout) instead of replacing it.
+    target = os.path.realpath(a.settings)
+    folder = os.path.dirname(target)
     os.makedirs(folder, exist_ok=True)
-    if os.path.exists(a.settings):
-        backup = f'{a.settings}.bak-{time.strftime("%Y%m%d-%H%M%S")}'
-        with open(a.settings, 'rb') as src, open(backup, 'wb') as dst:
-            dst.write(src.read())
+    if os.path.exists(target):
+        backup = unique_backup(a.settings)
+        shutil.copy2(target, backup)  # keeps the original's permissions: the file may hold secrets
         print(f'  backed up: {a.settings} -> {backup}')
     fd, tmp = tempfile.mkstemp(dir=folder, prefix='.settings-', suffix='.json')
-    with os.fdopen(fd, 'w') as f:
-        json.dump(merged, f, indent=2)
+    with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        json.dump(merged, f, indent=2, ensure_ascii=False)
         f.write('\n')
-    if os.path.exists(a.settings):
-        os.chmod(tmp, os.stat(a.settings).st_mode & 0o777)
-    os.replace(tmp, a.settings)
-    print(f'✓ installed: {a.settings}')
+    if os.path.exists(target):
+        os.chmod(tmp, os.stat(target).st_mode & 0o777)
+    os.replace(tmp, target)
+    print(f'\u2713 installed: {a.settings}')
     return 0
 
+
+def unique_backup(path):
+    """<file>.bak-<timestamp>, with a counter when a backup from the same second exists."""
+    base = f'{path}.bak-{time.strftime("%Y%m%d-%H%M%S")}'
+    candidate, n = base, 1
+    while os.path.lexists(candidate):
+        candidate, n = f'{base}-{n}', n + 1
+    return candidate
 
 if __name__ == '__main__':
     sys.exit(main())

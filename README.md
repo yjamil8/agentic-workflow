@@ -128,14 +128,30 @@ Without `--pin-models`, the aliases resolve to the newest models, which a
 restricted account may not have; Claude Code also uses the `haiku` alias for
 background work.
 
-Measured on real Agent Table workstreams (plan, Opus plan review, adversarial
-challenge, implementation, Opus code review; three chained tasks per session,
-three runs, 5 minute cache), these settings cut cost per workstream by about a
-third at equal quality, almost all of it from the compaction cap. Savings grow
-with session length, because an uncapped session's context keeps growing.
-Running each table turn as a fresh short-lived session instead of a long-lived
-seat cut cost by about three quarters in the same test; that dispatcher is not
-in this toolkit yet.
+What was measured: real Agent Table workstreams (plan, Opus plan review,
+adversarial challenge, implementation, Opus code review), three tasks chained
+per session, three runs per setup. The baseline was today's long-lived seat on
+the 5 minute cache with no cap. The same work with the 200k cap, the 1 hour
+main cache, the 5 minute subagent cache and Sonnet as the default subagent
+model cost about a third less per workstream at equal quality. That run had no
+cap-only arm; replaying its transcripts attributes most of the saving to the
+cap. The Sonnet subagent default is not in this profile because the named Opus
+reviewers did not use it. Savings grow with session length, because an
+uncapped session's context keeps growing. Running each table turn as a fresh
+short-lived session instead of a long-lived seat cut cost by about three
+quarters in the same test; that dispatcher is not in this toolkit yet.
+
+Things to know about these settings:
+
+- They live in `env`, which takes precedence over `/autocompact` and the
+  `autoCompactWindow` and `promptCacheTtl` settings. To change one, edit
+  `env` in `~/.claude/settings.json`.
+- 1 hour cache writes bill at twice the base input price (5 minute writes at
+  1.25 times); they pay off when a session waits between 5 and 60 minutes.
+- The subagent value (`5m`) is already the default. It also covers
+  compaction, forks and other helper requests, and it overrides a subagent's
+  own cache setting.
+- The cache variables need Claude Code v2.1.242 or later.
 
 Check that your account honors the 1 hour cache:
 

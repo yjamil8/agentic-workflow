@@ -43,6 +43,7 @@ AGENTS.md, CLAUDE.md        <- these rules; CLAUDE.md imports AGENTS.md
 strategies/                 <- table protocol, workspace operations, role
                                contracts, workflows, contribution guide
 guides/                     <- planning guide and plan/story/proposal templates
+config/                     <- opt-in Claude Code settings profiles
 agents/, commands/          <- Claude Code PR reviewer, solo-review checklist
 claude_skills/              <- Claude Code commands (agent-table, workflows)
 codex_skills/               <- Codex skills (agent-table, workflows, pr-review)

@@ -54,6 +54,16 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 CHANGED=0
 BACKED_UP=0
 
+COST_MERGE=(python3 "$ROOT/scripts/merge_claude_settings.py" --settings "$HOME/.claude/settings.json"
+            --profile "$ROOT/config/claude-cost-settings.json")
+[[ -n "$PIN_MODELS" ]] && COST_MERGE+=(--pin-models "$PIN_MODELS")
+# Check the settings file and pins before installing anything, so a bad value
+# does not leave a half-finished install.
+if [[ "$COST_SETTINGS" == "1" ]] && ! "${COST_MERGE[@]}" --dry-run > /dev/null; then
+  echo "cost settings check failed; nothing installed" >&2
+  exit 1
+fi
+
 render() {
   local src="$1"
   if [[ "$src" == *.md ]]; then
@@ -178,10 +188,8 @@ rm -f "$codex_body"
 
 if [[ "$COST_SETTINGS" == "1" ]]; then
   echo "== Claude Code: cost settings =="
-  merge_args=(--settings "$HOME/.claude/settings.json" --profile "$ROOT/config/claude-cost-settings.json")
-  [[ -n "$PIN_MODELS" ]] && merge_args+=(--pin-models "$PIN_MODELS")
-  [[ "$DRY_RUN" == "1" ]] && merge_args+=(--dry-run)
-  merge_out="$(python3 "$ROOT/scripts/merge_claude_settings.py" "${merge_args[@]}")"
+  [[ "$DRY_RUN" == "1" ]] && COST_MERGE+=(--dry-run)
+  merge_out="$("${COST_MERGE[@]}")"
   printf '%s\n' "$merge_out"
   if [[ "$DRY_RUN" != "1" ]]; then
     grep -q '^✓ installed' <<< "$merge_out" && CHANGED=$((CHANGED + 1))

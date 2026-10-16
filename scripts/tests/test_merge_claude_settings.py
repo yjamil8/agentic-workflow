@@ -88,9 +88,87 @@ class MergeSettingsTests(unittest.TestCase):
 
     def test_file_mode_is_kept(self):
         self.settings.write_text('{}')
-        os.chmod(self.settings, 0o600)
+        os.chmod(self.settings, 0o640)  # not the temp-file default, so a missing chmod fails
         self.run_merge()
-        self.assertEqual(os.stat(self.settings).st_mode & 0o777, 0o600)
+        self.assertEqual(os.stat(self.settings).st_mode & 0o777, 0o640)
+
+    def test_backup_keeps_content_and_restrictive_mode(self):
+        original = json.dumps({'env': {'ANTHROPIC_API_KEY': 'secret'}})
+        self.settings.write_text(original)
+        os.chmod(self.settings, 0o600)
+        old_umask = os.umask(0o022)
+        try:
+            self.run_merge()
+        finally:
+            os.umask(old_umask)
+        (backup,) = self.backups()
+        self.assertEqual(backup.read_text(), original)
+        self.assertEqual(os.stat(backup).st_mode & 0o777, 0o600)
+
+    def test_top_level_array_is_refused(self):
+        self.settings.write_text('[1]')
+        rc, _, err = self.run_merge()
+        self.assertEqual(rc, 1)
+        self.assertIn('not a JSON object', err)
+        self.assertEqual(self.settings.read_text(), '[1]')
+
+    def test_two_changes_in_one_second_keep_both_backups(self):
+        self.settings.write_text(json.dumps({'env': {'A': '1'}}))
+        self.run_merge()
+        self.settings.write_text(json.dumps({'env': {'A': '2'}}))
+        self.run_merge()
+        contents = sorted(b.read_text() for b in self.backups())
+        self.assertEqual(len(contents), 2)
+        self.assertIn(json.dumps({'env': {'A': '1'}}), contents)
+
+    def test_symlinked_settings_stay_a_symlink(self):
+        real = Path(self.dir.name) / 'dotfiles-settings.json'
+        real.write_text('{}')
+        self.settings.symlink_to(real)
+        self.run_merge()
+        self.assertTrue(self.settings.is_symlink())
+        self.assertIn('CLAUDE_CODE_PROMPT_CACHE_TTL', real.read_text())
+
+    def test_non_ascii_text_is_preserved(self):
+        self.settings.write_text(json.dumps({'statusLine': 'caf\u00e9 \u2713'}, ensure_ascii=False), encoding='utf-8')
+        self.run_merge()
+        self.assertIn('caf\u00e9 \u2713', self.settings.read_text(encoding='utf-8'))
+
+
+class InstallerFlagTests(unittest.TestCase):
+    """Run the real installer against a disposable HOME."""
+
+    def run_installer(self, *args):
+        import subprocess
+        home = tempfile.mkdtemp()
+        self.addCleanup(__import__('shutil').rmtree, home, True)
+        p = subprocess.run(['bash', str(ROOT / 'scripts' / 'install-local.sh'), *args],
+                           env=dict(os.environ, HOME=home), capture_output=True, text=True)
+        return p, Path(home)
+
+    def test_bad_pins_install_nothing(self):
+        p, home = self.run_installer('--cost-settings', '--pin-models', 'a,b')
+        self.assertEqual(p.returncode, 1)
+        self.assertFalse((home / '.claude').exists())
+
+    def test_pins_require_cost_settings(self):
+        p, _ = self.run_installer('--pin-models', 'a,b,c')
+        self.assertEqual(p.returncode, 2)
+
+    def test_unknown_option_is_rejected(self):
+        p, _ = self.run_installer('--bogus')
+        self.assertEqual(p.returncode, 2)
+
+    def test_cost_settings_written_with_pins(self):
+        p, home = self.run_installer('--cost-settings', '--pin-models=o,s,h')
+        self.assertEqual(p.returncode, 0, p.stderr)
+        env = json.loads((home / '.claude' / 'settings.json').read_text())['env']
+        self.assertEqual((env['CLAUDE_CODE_AUTO_COMPACT_WINDOW'], env['ANTHROPIC_DEFAULT_HAIKU_MODEL']), ('200000', 'h'))
+
+    def test_without_flag_settings_are_untouched(self):
+        p, home = self.run_installer()
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertFalse((home / '.claude' / 'settings.json').exists())
 
 
 if __name__ == '__main__':
