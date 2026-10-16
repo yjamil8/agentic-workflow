@@ -253,8 +253,8 @@ class SharedLockTests(unittest.TestCase):
             worker = threading.Thread(target=hold)
             worker.start()
             self.assertTrue(held.wait(5))
-            threading.Timer(0.5, release.set).start()
             started = time.monotonic()
+            threading.Timer(0.5, release.set).start()
             with agent_table.locked(table):
                 waited = time.monotonic() - started
             worker.join(5)
