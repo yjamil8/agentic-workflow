@@ -65,7 +65,8 @@ def write_table(path, content, state):
 @contextmanager
 def locked(path):
     # Stable per-user lock inode, outside the repository; never unlink live locks.
-    folder = Path(tempfile.gettempdir()) / f"agent-table-claude-locks-{os.getuid()}"
+    # Same folder and key as the Codex helper, so both serialize writes to a shared table.
+    folder = Path(tempfile.gettempdir()) / f"agent-table-locks-{os.getuid()}"
     folder.mkdir(mode=0o700, exist_ok=True)
     key = hashlib.sha256(str(path).encode()).hexdigest()
     with (folder / key).open("a") as handle:

@@ -233,5 +233,33 @@ class AgentTableClaudeTests(unittest.TestCase):
                 agent_table.own_thread(args)
 
 
+class SharedLockTests(unittest.TestCase):
+    def test_codex_and_claude_helpers_share_one_table_lock(self):
+        import threading
+        import time
+        codex_script = Path(__file__).resolve().parents[3] / "codex_skills" / "agent-table" / "scripts" / "agent_table.py"
+        spec = importlib.util.spec_from_file_location("agent_table_codex", codex_script)
+        codex = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(codex)
+        with tempfile.TemporaryDirectory() as temp:
+            table = (Path(temp) / "TABLE.md").resolve()
+            held, release = threading.Event(), threading.Event()
+
+            def hold():
+                with codex.locked(table):
+                    held.set()
+                    release.wait(5)
+
+            worker = threading.Thread(target=hold)
+            worker.start()
+            self.assertTrue(held.wait(5))
+            threading.Timer(0.5, release.set).start()
+            started = time.monotonic()
+            with agent_table.locked(table):
+                waited = time.monotonic() - started
+            worker.join(5)
+        self.assertGreaterEqual(waited, 0.4, "the Claude helper did not wait for the Codex helper's lock")
+
+
 if __name__ == "__main__":
     unittest.main()
