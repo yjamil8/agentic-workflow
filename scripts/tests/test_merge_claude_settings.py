@@ -63,6 +63,7 @@ class MergeSettingsTests(unittest.TestCase):
 
     def test_pin_models(self):
         rc, _, _ = self.run_merge('--pin-models', 'claude-opus-5,claude-sonnet-5,claude-sonnet-5')
+        self.assertEqual(rc, 0)
         env = json.loads(self.settings.read_text())['env']
         self.assertEqual(env['ANTHROPIC_DEFAULT_OPUS_MODEL'], 'claude-opus-5')
         self.assertEqual(env['ANTHROPIC_DEFAULT_HAIKU_MODEL'], 'claude-sonnet-5')
@@ -85,6 +86,8 @@ class MergeSettingsTests(unittest.TestCase):
         rc, _, err = self.run_merge()
         self.assertEqual(rc, 1)
         self.assertIn('"env" is not an object', err)
+        self.assertEqual(json.loads(self.settings.read_text()), {'env': ['x']})
+        self.assertEqual(self.backups(), [])
 
     def test_file_mode_is_kept(self):
         self.settings.write_text('{}')
@@ -190,11 +193,33 @@ class PermissionsProfileTests(unittest.TestCase):
         self.assertEqual(rc, 1)
         self.assertIn('"permissions.allow" is not a list', err)
 
+    def test_defaults_not_readded_to_a_deliberate_environment_list(self):
+        self.settings.write_text(json.dumps({'autoMode': {'environment': ['**Org**: Example']}}))
+        self.run_merge()
+        env = json.loads(self.settings.read_text())['autoMode']['environment']
+        self.assertEqual(env[0], '**Org**: Example')
+        self.assertNotIn('$defaults', env)
+        self.assertEqual(len(env), 3)
+
+    def test_defaults_added_to_a_new_environment_list(self):
+        self.run_merge()
+        self.assertEqual(json.loads(self.settings.read_text())['autoMode']['environment'][0], '$defaults')
+
+    def test_no_allow_rule_can_discard_work_or_run_arbitrary_commands(self):
+        allow = json.loads(PERMS.read_text())['permissions']['allow']
+        risky = ('git switch', 'git checkout', 'git fetch', 'git worktree add', 'git reset', 'git clean',
+                 'git restore', 'git push', 'rg ', 'rm ', 'agent_table_dispatch')
+        for rule in allow:
+            self.assertFalse(any(r in rule for r in risky), rule)
+
     def test_destructive_commands_ask_and_routine_ones_are_allowed(self):
         perms = json.loads(PERMS.read_text())['permissions']
         for rule in ('Bash(rm -rf *)', 'Bash(git push --force *)', 'Bash(git clean *)', 'Bash(git worktree remove *)'):
             self.assertIn(rule, perms['ask'])
-        self.assertIn('Bash(rg *)', perms['allow'])
+        self.assertIn('Bash(git commit *)', perms['allow'])
+        for rule in ('Bash(rm -Rf *)', 'Bash(git checkout .)', 'Bash(git branch --delete --force *)',
+                     'Bash(git switch --discard-changes *)', 'Bash(git checkout -f *)'):
+            self.assertIn(rule, perms['ask'])
         self.assertFalse(set(perms['allow']) & set(perms['ask']))
         self.assertNotIn('Bash(*)', perms['allow'])
 
@@ -206,8 +231,10 @@ class InstallerFlagTests(unittest.TestCase):
         import subprocess
         home = tempfile.mkdtemp()
         self.addCleanup(__import__('shutil').rmtree, home, True)
+        env = {k: v for k, v in os.environ.items() if k != 'CLAUDE_CONFIG_DIR'}
+        env.update(HOME=home, **getattr(self, 'extra_env', {}))
         p = subprocess.run(['bash', str(ROOT / 'scripts' / 'install-local.sh'), *args],
-                           env=dict(os.environ, HOME=home), capture_output=True, text=True)
+                           env=env, capture_output=True, text=True)
         return p, Path(home)
 
     def test_bad_pins_install_nothing(self):
@@ -236,6 +263,15 @@ class InstallerFlagTests(unittest.TestCase):
         self.assertEqual(p.returncode, 0, p.stderr)
         perms = json.loads((home / '.claude' / 'settings.json').read_text())['permissions']
         self.assertEqual(perms['additionalDirectories'], [str(ROOT), work])
+
+    def test_settings_follow_claude_config_dir(self):
+        cfg = tempfile.mkdtemp()
+        self.addCleanup(__import__('shutil').rmtree, cfg, True)
+        self.extra_env = {'CLAUDE_CONFIG_DIR': cfg}
+        p, home = self.run_installer('--cost-settings')
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertTrue((Path(cfg) / 'settings.json').exists())
+        self.assertFalse((home / '.claude' / 'settings.json').exists())
 
     def test_work_root_requires_permissions(self):
         p, _ = self.run_installer('--work-root', '/tmp')

@@ -2,13 +2,8 @@
   "permissions": {
     "defaultMode": "auto",
     "allow": [
-      "Bash(rg *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git switch *)",
-      "Bash(git checkout -b *)",
-      "Bash(git fetch *)",
-      "Bash(git worktree add *)",
       "Bash(git worktree list *)",
       "Bash(git rev-parse *)",
       "Bash(git merge-base *)",
@@ -22,14 +17,17 @@
       "Bash(npm run test *)",
       "Bash(npm run build *)",
       "Bash(npm run lint *)",
-      "Bash(python3 <agentic-workflow-root>/claude_skills/agent-table/scripts/agent_table_claude.py *)",
-      "Bash(python3 <agentic-workflow-root>/scripts/agent_table_dispatch.py *)"
+      "Bash(python3 <agentic-workflow-root>/claude_skills/agent-table/scripts/agent_table_claude.py *)"
     ],
     "ask": [
       "Bash(rm -r *)",
       "Bash(rm -rf *)",
       "Bash(rm -fr *)",
       "Bash(rm -R *)",
+      "Bash(rm --recursive *)",
+      "Bash(rm -rF *)",
+      "Bash(rm -fR *)",
+      "Bash(rm -Rf *)",
       "Bash(git reset --hard *)",
       "Bash(git clean *)",
       "Bash(git push --force *)",
@@ -49,7 +47,16 @@
       "Bash(dropdb *)",
       "Bash(dotnet ef database drop *)",
       "Bash(docker volume rm *)",
-      "Bash(docker system prune *)"
+      "Bash(docker system prune *)",
+      "Bash(git checkout .)",
+      "Bash(git branch --delete --force *)",
+      "Bash(git branch -d -f *)",
+      "Bash(git branch -df *)",
+      "Bash(git switch --discard-changes *)",
+      "Bash(git switch -f *)",
+      "Bash(git switch --force *)",
+      "Bash(git checkout -f *)",
+      "Bash(git checkout --force *)"
     ],
     "additionalDirectories": [
       "<agentic-workflow-root>"

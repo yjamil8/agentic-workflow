@@ -160,8 +160,9 @@ claude -p "hi" --output-format json
 ```
 
 `usage.cache_creation.ephemeral_1h_input_tokens` above 0 means it does. If
-only the 5 minute field has tokens, the compaction cap still provides most of
-the saving. Restart open sessions after installing.
+only the 5 minute field has tokens, the compaction cap should still provide
+most of the saving (an estimate from replaying transcripts, not a separate
+measured run). Restart open sessions after installing.
 
 ## Fewer permission prompts, destructive commands still ask
 
@@ -173,43 +174,55 @@ scripts/install-local.sh --permissions --work-root ~/work   # the folder holding
 ```
 
 This merges [config/claude-permissions.json](config/claude-permissions.json)
-into `~/.claude/settings.json` (rules are added, never removed; the file is
-backed up first):
+into your user settings (`$CLAUDE_CONFIG_DIR/settings.json` when that variable
+is set, otherwise `~/.claude/settings.json`). Rules are added, never removed,
+and the file is backed up first:
 
-- **Auto mode by default** (`permissions.defaultMode: auto`): a classifier
-  approves ordinary actions and blocks risky ones, so routine work does not
-  prompt. On usage-based billing its checks are billed tokens.
-- **Allow rules** for routine commands that are not read-only (`rg`, commits,
-  branches, worktree creation, common test and build runners, the agent-table
-  helper). They also skip the classifier.
-- **Ask rules** for destructive commands: recursive `rm`, `git reset --hard`,
-  `git clean`, force pushes, `git branch -D`, `git worktree remove`,
-  `git restore`, dropping stashes, `dropdb`, `dotnet ef database drop`, Docker
-  volume and system prunes. Ask rules prompt even in auto mode; in a headless
-  run with `--permission-prompts none` they are denied.
+- **Auto mode by default** (`permissions.defaultMode: auto`). This replaces any
+  default mode you had set, including bypass. A classifier approves ordinary
+  actions and blocks risky ones, so routine work does not prompt. On
+  usage-based billing its checks are billed tokens.
+- **Allow rules** for a few routine commands that are not read-only: staging
+  and committing, `mkdir`, common test and build runners, and the agent-table
+  helper. They skip the classifier. Test and build runners execute repository
+  code, including files the agent just wrote, so only use this profile in
+  repositories you trust.
+- **Ask rules** for destructive commands: recursive `rm` in its common
+  spellings, `git reset --hard`, `git clean`, force pushes, discarding work
+  with `git switch`/`git checkout -f`/`git checkout .`/`git restore` (this also
+  asks for the harmless `git restore --staged`), branch and worktree deletion,
+  dropping stashes, `dropdb`, `dotnet ef database drop`, Docker volume and
+  system prunes. Ask rules prompt even in auto mode; in a headless run with
+  `--permission-prompts none` they are denied.
 - **Trusted directories**: the toolkit checkout and each `--work-root` go in
-  `additionalDirectories`, and auto mode is told that every worktree of a repo
-  is the same trusted repo.
+  `additionalDirectories`. That lets sessions read and edit files in every repo
+  under the work root without prompts. Auto mode is also told that every
+  worktree of a repo is the same trusted repo. If your settings already list
+  auto mode environment entries without `"$defaults"`, the profile keeps it
+  that way.
 
 Why `cd <worktree> && rg x` prompted before: Claude Code checks each part of a
-chained command, and read-only commands skip approval only inside the session's
-working directory and its additional directories. A sibling worktree is
-outside both, so the read-only `rg` or `grep` needed approval. `--work-root`
-fixes that. In plain default mode Claude Code still asks before a chained
-`git` command that changes directory, because another repo's git config can run
-code; auto mode does not.
+chained command, and read-only commands such as `rg`, `grep` and `cat` skip
+approval only inside the session's working directory and its additional
+directories. A sibling worktree is outside both. `--work-root` fixes that. In
+plain default mode Claude Code still asks before a chained `git` command that
+changes directory, because another repo's git config can run code; auto mode
+does not.
 
-Rules match command text, not intent: `sh -c 'rm -rf x'` or `/bin/rm` do not
-match `Bash(rm -rf *)`. The auto mode classifier still reviews those, and its
-defaults already block destructive git and file operations, but treat the
+Limits: rules match command text, not intent, so `git -C <dir> reset --hard`,
+`sh -c '...'` or `/bin/rm` do not match them. Those fall to the auto mode
+classifier, whose defaults block destructive git and file operations unless
+the user explicitly asked for that exact action in the session. Treat the
 rules as a convenience, not a security boundary. Your organization's managed
-settings always win, and an admin can turn auto mode off.
+settings always win, and an admin can turn auto mode off. Package manager
+`run` rules (`npm run ...`) may be dropped in auto mode; they still apply in
+other modes.
 
 Tested on Claude Code 2.1.300 in headless sessions against a disposable repo
 with a sibling worktree: with `--work-root`, `cd <worktree> && grep | head`,
-`cd <worktree> && rg` and commits ran in auto mode; recursive `rm`,
-`git reset --hard`, `git clean -fd` and a force push were denied. Without the
-profile, auto mode ran the recursive `rm` and the hard reset.
+`cd <worktree> && rg` and commits ran; recursive `rm`, `git reset --hard`,
+`git clean -fd`, a force push and `git switch --discard-changes` were denied
+in default mode, and the ask rules deny the same commands in auto mode.
 
 ## Prepare each work repo
 

@@ -57,7 +57,12 @@ def _merge_into(target, source, prefix, changes):
                 target[key] = []
             elif not isinstance(target[key], list):
                 raise ValueError(f'settings "{label}" is not a list; fix it by hand first')
+            existing = list(target[key])
             for item in value:
+                # "$defaults" pulls in Claude Code's built-in auto mode rules. Add it only to a
+                # list this merge creates; a user list without it omitted it on purpose.
+                if item == '$defaults' and existing:
+                    continue
                 if item not in target[key]:
                     target[key].append(item)
                     changes.append((label, None, item))

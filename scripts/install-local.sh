@@ -71,7 +71,9 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 CHANGED=0
 BACKED_UP=0
 
-COST_MERGE=(python3 "$ROOT/scripts/merge_claude_settings.py" --settings "$HOME/.claude/settings.json"
+# Claude Code reads user settings from CLAUDE_CONFIG_DIR when it is set.
+CLAUDE_SETTINGS="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
+COST_MERGE=(python3 "$ROOT/scripts/merge_claude_settings.py" --settings "$CLAUDE_SETTINGS"
             --profile "$ROOT/config/claude-cost-settings.json")
 [[ -n "$PIN_MODELS" ]] && COST_MERGE+=(--pin-models "$PIN_MODELS")
 # Check the settings file and pins before installing anything, so a bad value
@@ -80,9 +82,9 @@ if [[ "$COST_SETTINGS" == "1" ]] && ! "${COST_MERGE[@]}" --dry-run > /dev/null; 
   echo "cost settings check failed; nothing installed" >&2
   exit 1
 fi
-PERM_MERGE=(python3 "$ROOT/scripts/merge_claude_settings.py" --settings "$HOME/.claude/settings.json"
+PERM_MERGE=(python3 "$ROOT/scripts/merge_claude_settings.py" --settings "$CLAUDE_SETTINGS"
             --profile "$ROOT/config/claude-permissions.json" --toolkit-root "$ROOT")
-for dir in "${WORK_ROOTS[@]}"; do PERM_MERGE+=(--add-dir "$dir"); done
+for dir in ${WORK_ROOTS[@]+"${WORK_ROOTS[@]}"}; do PERM_MERGE+=(--add-dir "$dir"); done
 if [[ "$PERMISSIONS" == "1" ]] && ! "${PERM_MERGE[@]}" --dry-run > /dev/null; then
   echo "permissions check failed; nothing installed" >&2
   exit 1
