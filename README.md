@@ -115,8 +115,9 @@ scripts/install-local.sh --cost-settings --pin-models claude-opus-5,claude-sonne
 ```
 
 This merges [config/claude-cost-settings.json](config/claude-cost-settings.json)
-into `~/.claude/settings.json`, keeping your other settings and backing up the
-file first:
+into your user settings (`$CLAUDE_CONFIG_DIR/settings.json` when that variable
+is set, otherwise `~/.claude/settings.json`), keeping your other settings and
+backing up the file first:
 
 | Setting | Value | Why |
 |---|---|---|
@@ -145,7 +146,7 @@ Things to know about these settings:
 
 - They live in `env`, which takes precedence over `/autocompact` and the
   `autoCompactWindow` and `promptCacheTtl` settings. To change one, edit
-  `env` in `~/.claude/settings.json`.
+  `env` in that settings file.
 - 1 hour cache writes bill at twice the base input price (5 minute writes at
   1.25 times); they pay off when a session waits between 5 and 60 minutes.
 - The subagent value (`5m`) is already the default. It also covers
@@ -214,7 +215,9 @@ Limits: rules match command text, not intent, so `git -C <dir> reset --hard`,
 classifier, whose defaults block destructive git and file operations unless
 the user explicitly asked for that exact action in the session. Treat the
 rules as a convenience, not a security boundary. Your organization's managed
-settings always win, and an admin can turn auto mode off. Package manager
+settings always win, and an admin can turn auto mode off. The installer's
+commands, agent and CLAUDE.md block still go to `~/.claude` even when
+`CLAUDE_CONFIG_DIR` is set; only the two settings profiles follow it. Package manager
 `run` rules (`npm run ...`) may be dropped in auto mode; they still apply in
 other modes.
 

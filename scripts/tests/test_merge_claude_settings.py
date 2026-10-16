@@ -212,6 +212,48 @@ class PermissionsProfileTests(unittest.TestCase):
         for rule in allow:
             self.assertFalse(any(r in rule for r in risky), rule)
 
+    def test_every_reviewed_ask_rule_is_present(self):
+        expected = [
+            "Bash(rm -r *)",
+            "Bash(rm -rf *)",
+            "Bash(rm -fr *)",
+            "Bash(rm -R *)",
+            "Bash(rm --recursive *)",
+            "Bash(rm -rF *)",
+            "Bash(rm -fR *)",
+            "Bash(rm -Rf *)",
+            "Bash(git reset --hard *)",
+            "Bash(git clean *)",
+            "Bash(git push --force *)",
+            "Bash(git push -f *)",
+            "Bash(git push --force-with-lease *)",
+            "Bash(git push * --force)",
+            "Bash(git push * -f)",
+            "Bash(git push * --force-with-lease)",
+            "Bash(git branch -D *)",
+            "Bash(git worktree remove *)",
+            "Bash(git checkout -- *)",
+            "Bash(git restore *)",
+            "Bash(git stash drop *)",
+            "Bash(git stash clear *)",
+            "Bash(git filter-branch *)",
+            "Bash(git update-ref -d *)",
+            "Bash(dropdb *)",
+            "Bash(dotnet ef database drop *)",
+            "Bash(docker volume rm *)",
+            "Bash(docker system prune *)",
+            "Bash(git checkout .)",
+            "Bash(git branch --delete --force *)",
+            "Bash(git branch -d -f *)",
+            "Bash(git branch -df *)",
+            "Bash(git switch --discard-changes *)",
+            "Bash(git switch -f *)",
+            "Bash(git switch --force *)",
+            "Bash(git checkout -f *)",
+            "Bash(git checkout --force *)"
+        ]
+        self.assertEqual(sorted(json.loads(PERMS.read_text())['permissions']['ask']), sorted(expected))
+
     def test_destructive_commands_ask_and_routine_ones_are_allowed(self):
         perms = json.loads(PERMS.read_text())['permissions']
         for rule in ('Bash(rm -rf *)', 'Bash(git push --force *)', 'Bash(git clean *)', 'Bash(git worktree remove *)'):

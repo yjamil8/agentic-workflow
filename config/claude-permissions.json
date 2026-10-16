@@ -65,7 +65,7 @@
   "autoMode": {
     "environment": [
       "$defaults",
-      "**Trusted repo (worktrees and toolkit)**: every git worktree of the session's repository (as listed by `git worktree list`, including sibling `*-worktrees` directories) is the same trusted repo, not scope escalation. The agentic-workflow toolkit checkout at <agentic-workflow-root> is trusted for reading and for running its scripts.",
+      "**Trusted repo (worktrees and toolkit)**: every git worktree of the session's repository (as listed by `git worktree list`, including sibling `*-worktrees` directories) is the same trusted repo, not scope escalation. The agentic-workflow toolkit checkout at <agentic-workflow-root> is trusted for reading and for running its agent-table helper (claude_skills/agent-table/scripts/agent_table_claude.py); its other scripts get no special trust.",
       "**Agent workflow**: sessions run long autonomous Agent Table workflows. Creating branches and worktrees, committing, running local tests and builds, and writing plans, reviews and TABLE.md files inside the work repo are routine."
     ]
   }
