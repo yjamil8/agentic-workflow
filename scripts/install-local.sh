@@ -19,10 +19,32 @@ set -euo pipefail
 # skills can find the shared contracts from whatever repo you work in. Move
 # the checkout and you must re-run this script.
 #
-# Usage: scripts/install-local.sh [--dry-run]
+# Opt-in: --cost-settings merges config/claude-cost-settings.json (compaction
+# cap and prompt cache lifetimes) into ~/.claude/settings.json, keeping every
+# other setting. --pin-models OPUS,SONNET,HAIKU also points Claude Code's
+# opus/sonnet/haiku aliases at the model IDs your account can use.
+#
+# Usage: scripts/install-local.sh [--dry-run] [--cost-settings [--pin-models OPUS,SONNET,HAIKU]]
 
 DRY_RUN=0
-[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1
+COST_SETTINGS=0
+PIN_MODELS=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run) DRY_RUN=1 ;;
+    --cost-settings) COST_SETTINGS=1 ;;
+    --pin-models)
+      [[ $# -ge 2 ]] || { echo "--pin-models needs OPUS,SONNET,HAIKU model IDs" >&2; exit 2; }
+      PIN_MODELS="$2"; shift ;;
+    --pin-models=*) PIN_MODELS="${1#*=}" ;;
+    *) echo "unknown option: $1" >&2; echo "usage: $0 [--dry-run] [--cost-settings [--pin-models OPUS,SONNET,HAIKU]]" >&2; exit 2 ;;
+  esac
+  shift
+done
+if [[ -n "$PIN_MODELS" && "$COST_SETTINGS" != "1" ]]; then
+  echo "--pin-models only applies with --cost-settings" >&2
+  exit 2
+fi
 
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 CLAUDE_COMMANDS="$HOME/.claude/commands"
@@ -153,6 +175,19 @@ codex_body="$(mktemp)"
 render "$ROOT/AGENTS.md" > "$codex_body"
 install_block "$HOME/.codex/AGENTS.md" "$codex_body"
 rm -f "$codex_body"
+
+if [[ "$COST_SETTINGS" == "1" ]]; then
+  echo "== Claude Code: cost settings =="
+  merge_args=(--settings "$HOME/.claude/settings.json" --profile "$ROOT/config/claude-cost-settings.json")
+  [[ -n "$PIN_MODELS" ]] && merge_args+=(--pin-models "$PIN_MODELS")
+  [[ "$DRY_RUN" == "1" ]] && merge_args+=(--dry-run)
+  merge_out="$(python3 "$ROOT/scripts/merge_claude_settings.py" "${merge_args[@]}")"
+  printf '%s\n' "$merge_out"
+  if [[ "$DRY_RUN" != "1" ]]; then
+    grep -q '^✓ installed' <<< "$merge_out" && CHANGED=$((CHANGED + 1))
+    grep -q '^  backed up' <<< "$merge_out" && BACKED_UP=$((BACKED_UP + 1))
+  fi
+fi
 
 echo
 if [[ "$DRY_RUN" == "1" ]]; then

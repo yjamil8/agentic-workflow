@@ -96,6 +96,57 @@ start.
 A repository's own `CLAUDE.md`/`AGENTS.md` and your team's written policies
 take precedence over this toolkit wherever they conflict.
 
+## Lower token cost on usage-based billing
+
+Long agent sessions are cheap on a subscription and expensive on API or
+enterprise usage credits. Two things drive the cost: every request rereads the
+whole conversation, and on API billing the prompt cache expires after 5
+minutes, so a seat that waits for a handoff rewrites its full context when it
+wakes. Claude Code's default compaction point on 1M-context models is about
+967k tokens, so a long-lived seat can carry several hundred thousand tokens
+into every request.
+
+Opt in with the installer:
+
+```bash
+scripts/install-local.sh --cost-settings
+# If your account only has some models, point the opus/sonnet/haiku aliases at them:
+scripts/install-local.sh --cost-settings --pin-models claude-opus-5,claude-sonnet-5,claude-sonnet-5
+```
+
+This merges [config/claude-cost-settings.json](config/claude-cost-settings.json)
+into `~/.claude/settings.json`, keeping your other settings and backing up the
+file first:
+
+| Setting | Value | Why |
+|---|---|---|
+| `CLAUDE_CODE_AUTO_COMPACT_WINDOW` | `200000` | Compact at 200k tokens instead of about 967k |
+| `CLAUDE_CODE_PROMPT_CACHE_TTL` | `1h` | A main session that waits 5 to 60 minutes keeps its cache |
+| `CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL` | `5m` | Subagents are short-lived; the 5 minute cache costs less to write |
+
+Without `--pin-models`, the aliases resolve to the newest models, which a
+restricted account may not have; Claude Code also uses the `haiku` alias for
+background work.
+
+Measured on real Agent Table workstreams (plan, Opus plan review, adversarial
+challenge, implementation, Opus code review; three chained tasks per session,
+three runs, 5 minute cache), these settings cut cost per workstream by about a
+third at equal quality, almost all of it from the compaction cap. Savings grow
+with session length, because an uncapped session's context keeps growing.
+Running each table turn as a fresh short-lived session instead of a long-lived
+seat cut cost by about three quarters in the same test; that dispatcher is not
+in this toolkit yet.
+
+Check that your account honors the 1 hour cache:
+
+```bash
+claude -p "hi" --output-format json
+```
+
+`usage.cache_creation.ephemeral_1h_input_tokens` above 0 means it does. If
+only the 5 minute field has tokens, the compaction cap still provides most of
+the saving. Restart open sessions after installing.
+
 ## Prepare each work repo
 
 Agent Tables, plans, and runbooks live inside the work repo, at
@@ -139,4 +190,5 @@ machine as needed. The agent-table helpers have automated tests:
 ```bash
 python3 -m unittest discover -s claude_skills/agent-table/tests -p 'test_*.py'
 python3 -m unittest discover -s codex_skills/agent-table/tests -p 'test_*.py'
+python3 -m unittest discover -s scripts/tests -p 'test_merge_claude_settings.py'
 ```

@@ -23,6 +23,8 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p test_workflow_instructions.py
       - name: Check root instruction routes
         run: python3 scripts/check-workflow-instructions.py
+      - name: Test settings merge
+        run: python3 -m unittest discover -s scripts/tests -p test_merge_claude_settings.py
       - name: Test plan renderer
         run: python3 -m unittest discover -s scripts -p test_plan_renderer.py
       - name: Test agent-table helpers
