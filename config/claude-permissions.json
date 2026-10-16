@@ -1,0 +1,65 @@
+{
+  "permissions": {
+    "defaultMode": "auto",
+    "allow": [
+      "Bash(rg *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git switch *)",
+      "Bash(git checkout -b *)",
+      "Bash(git fetch *)",
+      "Bash(git worktree add *)",
+      "Bash(git worktree list *)",
+      "Bash(git rev-parse *)",
+      "Bash(git merge-base *)",
+      "Bash(mkdir *)",
+      "Bash(python3 -m unittest *)",
+      "Bash(python3 -m pytest *)",
+      "Bash(pytest *)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet test *)",
+      "Bash(npm test *)",
+      "Bash(npm run test *)",
+      "Bash(npm run build *)",
+      "Bash(npm run lint *)",
+      "Bash(python3 <agentic-workflow-root>/claude_skills/agent-table/scripts/agent_table_claude.py *)",
+      "Bash(python3 <agentic-workflow-root>/scripts/agent_table_dispatch.py *)"
+    ],
+    "ask": [
+      "Bash(rm -r *)",
+      "Bash(rm -rf *)",
+      "Bash(rm -fr *)",
+      "Bash(rm -R *)",
+      "Bash(git reset --hard *)",
+      "Bash(git clean *)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git push --force-with-lease *)",
+      "Bash(git push * --force)",
+      "Bash(git push * -f)",
+      "Bash(git push * --force-with-lease)",
+      "Bash(git branch -D *)",
+      "Bash(git worktree remove *)",
+      "Bash(git checkout -- *)",
+      "Bash(git restore *)",
+      "Bash(git stash drop *)",
+      "Bash(git stash clear *)",
+      "Bash(git filter-branch *)",
+      "Bash(git update-ref -d *)",
+      "Bash(dropdb *)",
+      "Bash(dotnet ef database drop *)",
+      "Bash(docker volume rm *)",
+      "Bash(docker system prune *)"
+    ],
+    "additionalDirectories": [
+      "<agentic-workflow-root>"
+    ]
+  },
+  "autoMode": {
+    "environment": [
+      "$defaults",
+      "**Trusted repo (worktrees and toolkit)**: every git worktree of the session's repository (as listed by `git worktree list`, including sibling `*-worktrees` directories) is the same trusted repo, not scope escalation. The agentic-workflow toolkit checkout at <agentic-workflow-root> is trusted for reading and for running its scripts.",
+      "**Agent workflow**: sessions run long autonomous Agent Table workflows. Creating branches and worktrees, committing, running local tests and builds, and writing plans, reviews and TABLE.md files inside the work repo are routine."
+    ]
+  }
+}

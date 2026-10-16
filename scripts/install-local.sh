@@ -24,11 +24,19 @@ set -euo pipefail
 # other setting. --pin-models OPUS,SONNET,HAIKU also points Claude Code's
 # opus/sonnet/haiku aliases at the model IDs your account can use.
 #
+# Opt-in: --permissions merges config/claude-permissions.json: auto mode, allow
+# rules for routine work, ask rules for destructive commands, and trusted
+# directories. --work-root DIR adds the folder holding your repos and their
+# worktrees, so chained commands such as `cd <worktree> && rg x` do not prompt.
+#
 # Usage: scripts/install-local.sh [--dry-run] [--cost-settings [--pin-models OPUS,SONNET,HAIKU]]
+#                                 [--permissions [--work-root DIR]]
 
 DRY_RUN=0
 COST_SETTINGS=0
 PIN_MODELS=""
+PERMISSIONS=0
+WORK_ROOTS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry-run) DRY_RUN=1 ;;
@@ -37,12 +45,21 @@ while [[ $# -gt 0 ]]; do
       [[ $# -ge 2 ]] || { echo "--pin-models needs OPUS,SONNET,HAIKU model IDs" >&2; exit 2; }
       PIN_MODELS="$2"; shift ;;
     --pin-models=*) PIN_MODELS="${1#*=}" ;;
-    *) echo "unknown option: $1" >&2; echo "usage: $0 [--dry-run] [--cost-settings [--pin-models OPUS,SONNET,HAIKU]]" >&2; exit 2 ;;
+    --permissions) PERMISSIONS=1 ;;
+    --work-root)
+      [[ $# -ge 2 ]] || { echo "--work-root needs a directory" >&2; exit 2; }
+      WORK_ROOTS+=("$2"); shift ;;
+    --work-root=*) WORK_ROOTS+=("${1#*=}") ;;
+    *) echo "unknown option: $1" >&2; echo "usage: $0 [--dry-run] [--cost-settings [--pin-models OPUS,SONNET,HAIKU]] [--permissions [--work-root DIR]]" >&2; exit 2 ;;
   esac
   shift
 done
 if [[ -n "$PIN_MODELS" && "$COST_SETTINGS" != "1" ]]; then
   echo "--pin-models only applies with --cost-settings" >&2
+  exit 2
+fi
+if [[ ${#WORK_ROOTS[@]} -gt 0 && "$PERMISSIONS" != "1" ]]; then
+  echo "--work-root only applies with --permissions" >&2
   exit 2
 fi
 
@@ -61,6 +78,13 @@ COST_MERGE=(python3 "$ROOT/scripts/merge_claude_settings.py" --settings "$HOME/.
 # does not leave a half-finished install.
 if [[ "$COST_SETTINGS" == "1" ]] && ! "${COST_MERGE[@]}" --dry-run > /dev/null; then
   echo "cost settings check failed; nothing installed" >&2
+  exit 1
+fi
+PERM_MERGE=(python3 "$ROOT/scripts/merge_claude_settings.py" --settings "$HOME/.claude/settings.json"
+            --profile "$ROOT/config/claude-permissions.json" --toolkit-root "$ROOT")
+for dir in "${WORK_ROOTS[@]}"; do PERM_MERGE+=(--add-dir "$dir"); done
+if [[ "$PERMISSIONS" == "1" ]] && ! "${PERM_MERGE[@]}" --dry-run > /dev/null; then
+  echo "permissions check failed; nothing installed" >&2
   exit 1
 fi
 
@@ -186,15 +210,27 @@ render "$ROOT/AGENTS.md" > "$codex_body"
 install_block "$HOME/.codex/AGENTS.md" "$codex_body"
 rm -f "$codex_body"
 
+apply_profile() {
+  local -a merge=("$@")
+  [[ "$DRY_RUN" == "1" ]] && merge+=(--dry-run)
+  local out
+  out="$("${merge[@]}")"
+  printf '%s\n' "$out"
+  if [[ "$DRY_RUN" != "1" ]]; then
+    grep -q '^✓ installed' <<< "$out" && CHANGED=$((CHANGED + 1))
+    grep -q '^  backed up' <<< "$out" && BACKED_UP=$((BACKED_UP + 1))
+  fi
+  return 0
+}
+
 if [[ "$COST_SETTINGS" == "1" ]]; then
   echo "== Claude Code: cost settings =="
-  [[ "$DRY_RUN" == "1" ]] && COST_MERGE+=(--dry-run)
-  merge_out="$("${COST_MERGE[@]}")"
-  printf '%s\n' "$merge_out"
-  if [[ "$DRY_RUN" != "1" ]]; then
-    grep -q '^✓ installed' <<< "$merge_out" && CHANGED=$((CHANGED + 1))
-    grep -q '^  backed up' <<< "$merge_out" && BACKED_UP=$((BACKED_UP + 1))
-  fi
+  apply_profile "${COST_MERGE[@]}"
+fi
+if [[ "$PERMISSIONS" == "1" ]]; then
+  echo "== Claude Code: permissions =="
+  apply_profile "${PERM_MERGE[@]}"
+  [[ ${#WORK_ROOTS[@]} -eq 0 ]] && echo "  note: without --work-root, chained commands in other repos and worktrees still prompt"
 fi
 
 echo

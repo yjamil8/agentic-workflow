@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Merge the toolkit's cost settings into a Claude Code settings.json.
+"""Merge a toolkit settings profile into a Claude Code settings.json.
 
-Only the keys in the profile (and optional model pins) are set; every other
-setting is preserved. An existing file that would change is backed up as
+Only the keys in the profile (and optional model pins) are set, and list
+entries are added, never removed; every other setting is preserved. An existing file that would change is backed up as
 <file>.bak-<timestamp>. An unreadable or invalid file is left untouched.
 
 Usage:
   merge_claude_settings.py --settings ~/.claude/settings.json \
       --profile config/claude-cost-settings.json \
-      [--pin-models OPUS_ID,SONNET_ID,HAIKU_ID] [--dry-run]
+      [--pin-models OPUS_ID,SONNET_ID,HAIKU_ID] [--toolkit-root PATH] [--add-dir DIR ...] [--dry-run]
 """
 import argparse
 import json
@@ -29,21 +29,52 @@ def parse_pins(value):
 
 
 def merge(current, profile, pins=None):
-    """Return (merged settings, list of (key, old, new) changes) without mutating inputs."""
+    """Return (merged settings, list of (key, old, new) changes) without mutating inputs.
+
+    Objects merge key by key, lists gain the profile's missing entries (existing
+    entries and their order are kept), and other values are replaced.
+    """
     merged = json.loads(json.dumps(current))
-    wanted = dict(profile.get('env', {}))
-    wanted.update(pins or {})
-    env = merged.get('env')
-    if env is None:
-        env = merged['env'] = {}
-    elif not isinstance(env, dict):
-        raise ValueError('settings "env" is not an object; fix it by hand first')
+    wanted = json.loads(json.dumps(profile))
+    if pins:
+        wanted.setdefault('env', {}).update(pins)
     changes = []
-    for key, value in wanted.items():
-        if env.get(key) != value:
-            changes.append((key, env.get(key), value))
-            env[key] = value
+    _merge_into(merged, wanted, '', changes)
     return merged, changes
+
+
+def _merge_into(target, source, prefix, changes):
+    for key, value in source.items():
+        label = prefix + key
+        if isinstance(value, dict):
+            if key not in target:
+                target[key] = {}
+            elif not isinstance(target[key], dict):
+                raise ValueError(f'settings "{label}" is not an object; fix it by hand first')
+            _merge_into(target[key], value, label + '.', changes)
+        elif isinstance(value, list):
+            if key not in target:
+                target[key] = []
+            elif not isinstance(target[key], list):
+                raise ValueError(f'settings "{label}" is not a list; fix it by hand first')
+            for item in value:
+                if item not in target[key]:
+                    target[key].append(item)
+                    changes.append((label, None, item))
+        elif target.get(key) != value:
+            changes.append((label, target.get(key), value))
+            target[key] = value
+
+
+def substitute(value, root):
+    """Replace the <agentic-workflow-root> placeholder in every string."""
+    if isinstance(value, dict):
+        return {k: substitute(v, root) for k, v in value.items()}
+    if isinstance(value, list):
+        return [substitute(v, root) for v in value]
+    if isinstance(value, str) and root:
+        return value.replace('<agentic-workflow-root>', root)
+    return value
 
 
 def main(argv=None):
@@ -53,12 +84,20 @@ def main(argv=None):
     ap.add_argument('--settings', required=True)
     ap.add_argument('--profile', required=True)
     ap.add_argument('--pin-models')
+    ap.add_argument('--toolkit-root', help='replaces <agentic-workflow-root> in the profile')
+    ap.add_argument('--add-dir', action='append', default=[],
+                    help='also add this directory to permissions.additionalDirectories (repeatable)')
     ap.add_argument('--dry-run', action='store_true')
     a = ap.parse_args(argv)
     try:
         pins = parse_pins(a.pin_models) if a.pin_models else None
         with open(a.profile, encoding='utf-8') as f:
-            profile = json.load(f)
+            profile = substitute(json.load(f), a.toolkit_root)
+        for folder in a.add_dir:
+            folder = os.path.abspath(os.path.expanduser(folder))
+            if not os.path.isdir(folder):
+                raise ValueError(f'--add-dir {folder} is not a directory')
+            profile.setdefault('permissions', {}).setdefault('additionalDirectories', []).append(folder)
         current = {}
         if os.path.exists(a.settings):
             with open(a.settings, encoding='utf-8') as f:
@@ -73,7 +112,11 @@ def main(argv=None):
         print(f'  up to date: {a.settings}')
         return 0
     for key, old, new in changes:
-        print(f'  {"would set" if a.dry_run else "set"} {key}: {old if old is not None else "(unset)"} -> {new}')
+        verb = 'would' if a.dry_run else ''
+        if isinstance(new, str) and old is None and '.' in key and key.rsplit('.', 1)[1] in ('allow', 'ask', 'deny', 'environment', 'soft_deny', 'hard_deny', 'additionalDirectories'):
+            print(f'  {verb + " add" if verb else "add"} {key}: {new[:100]}')
+        else:
+            print(f'  {verb + " set" if verb else "set"} {key}: {old if old is not None else "(unset)"} -> {new}')
     if a.dry_run:
         return 0
     # Write through a symlink (for example into a dotfiles checkout) instead of replacing it.

@@ -135,6 +135,70 @@ class MergeSettingsTests(unittest.TestCase):
         self.assertIn('caf\u00e9 \u2713', self.settings.read_text(encoding='utf-8'))
 
 
+PERMS = ROOT / 'config' / 'claude-permissions.json'
+
+
+class PermissionsProfileTests(unittest.TestCase):
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.dir.cleanup)
+        self.settings = Path(self.dir.name) / 'settings.json'
+
+    def run_merge(self, *extra):
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            rc = m.main(['--settings', str(self.settings), '--profile', str(PERMS), '--toolkit-root', '/opt/aw', *extra])
+        return rc, out.getvalue(), err.getvalue()
+
+    def test_lists_are_unioned_and_existing_rules_kept_in_order(self):
+        self.settings.write_text(json.dumps({'permissions': {'allow': ['Bash(make *)', 'Bash(rg *)'], 'deny': ['Read(./.env)']}}))
+        rc, out, _ = self.run_merge()
+        self.assertEqual(rc, 0)
+        perms = json.loads(self.settings.read_text())['permissions']
+        self.assertEqual(perms['allow'][:2], ['Bash(make *)', 'Bash(rg *)'])
+        self.assertEqual(perms['allow'].count('Bash(rg *)'), 1)
+        self.assertEqual(perms['deny'], ['Read(./.env)'])
+        self.assertIn('Bash(git reset --hard *)', perms['ask'])
+        self.assertEqual(perms['defaultMode'], 'auto')
+
+    def test_toolkit_root_is_substituted_everywhere(self):
+        self.run_merge()
+        text = self.settings.read_text()
+        self.assertNotIn('<agentic-workflow-root>', text)
+        perms = json.loads(text)['permissions']
+        self.assertIn('/opt/aw', perms['additionalDirectories'])
+        self.assertIn('Bash(python3 /opt/aw/claude_skills/agent-table/scripts/agent_table_claude.py *)', perms['allow'])
+
+    def test_add_dir_is_added_once(self):
+        work = Path(self.dir.name) / 'work'
+        work.mkdir()
+        self.run_merge('--add-dir', str(work))
+        rc, out, _ = self.run_merge('--add-dir', str(work))
+        self.assertIn('up to date', out)
+        dirs = json.loads(self.settings.read_text())['permissions']['additionalDirectories']
+        self.assertEqual(dirs.count(str(work)), 1)
+
+    def test_missing_add_dir_changes_nothing(self):
+        rc, _, err = self.run_merge('--add-dir', str(Path(self.dir.name) / 'nope'))
+        self.assertEqual(rc, 1)
+        self.assertIn('is not a directory', err)
+        self.assertFalse(self.settings.exists())
+
+    def test_non_list_rule_field_is_refused(self):
+        self.settings.write_text(json.dumps({'permissions': {'allow': 'Bash(*)'}}))
+        rc, _, err = self.run_merge()
+        self.assertEqual(rc, 1)
+        self.assertIn('"permissions.allow" is not a list', err)
+
+    def test_destructive_commands_ask_and_routine_ones_are_allowed(self):
+        perms = json.loads(PERMS.read_text())['permissions']
+        for rule in ('Bash(rm -rf *)', 'Bash(git push --force *)', 'Bash(git clean *)', 'Bash(git worktree remove *)'):
+            self.assertIn(rule, perms['ask'])
+        self.assertIn('Bash(rg *)', perms['allow'])
+        self.assertFalse(set(perms['allow']) & set(perms['ask']))
+        self.assertNotIn('Bash(*)', perms['allow'])
+
+
 class InstallerFlagTests(unittest.TestCase):
     """Run the real installer against a disposable HOME."""
 
@@ -164,6 +228,23 @@ class InstallerFlagTests(unittest.TestCase):
         self.assertEqual(p.returncode, 0, p.stderr)
         env = json.loads((home / '.claude' / 'settings.json').read_text())['env']
         self.assertEqual((env['CLAUDE_CODE_AUTO_COMPACT_WINDOW'], env['ANTHROPIC_DEFAULT_HAIKU_MODEL']), ('200000', 'h'))
+
+    def test_permissions_with_work_root(self):
+        work = tempfile.mkdtemp()
+        self.addCleanup(__import__('shutil').rmtree, work, True)
+        p, home = self.run_installer('--permissions', '--work-root', work)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        perms = json.loads((home / '.claude' / 'settings.json').read_text())['permissions']
+        self.assertEqual(perms['additionalDirectories'], [str(ROOT), work])
+
+    def test_work_root_requires_permissions(self):
+        p, _ = self.run_installer('--work-root', '/tmp')
+        self.assertEqual(p.returncode, 2)
+
+    def test_missing_work_root_installs_nothing(self):
+        p, home = self.run_installer('--permissions', '--work-root', '/nonexistent/dir')
+        self.assertEqual(p.returncode, 1)
+        self.assertFalse((home / '.claude').exists())
 
     def test_without_flag_settings_are_untouched(self):
         p, home = self.run_installer()
